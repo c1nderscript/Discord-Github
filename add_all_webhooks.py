@@ -9,10 +9,10 @@ import time
 from typing import List, Dict
 
 # Configuration - Replace with your actual values
-WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"
-WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_HERE"
-GITHUB_TOKEN = "YOUR_GITHUB_TOKEN_HERE"
-GITHUB_USERNAME = "YOUR_GITHUB_USERNAME_HERE"
+WEBHOOK_URL = "http://65.21.253.0:8000/github"
+WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_HERE"  # Replace with your actual secret
+GITHUB_TOKEN = "YOUR_GITHUB_TOKEN_HERE"  # Replace with your actual token
+GITHUB_USERNAME = "c1nderscript"
 
 def get_all_repositories() -> List[str]:
     """
