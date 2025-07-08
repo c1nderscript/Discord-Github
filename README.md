@@ -26,10 +26,12 @@ The repository includes a GitHub Actions workflow that automatically runs the we
 **To enable the automated workflow:**
 
 1. Set up the following repository secrets in your GitHub repository settings:
-   - `GITHUB_TOKEN`: Your GitHub personal access token
-   - `GITHUB_WEBHOOK_SECRET`: The secret for webhook verification
-   - `GITHUB_USERNAME`: Your GitHub username
-   - `WEBHOOK_URL`: The URL for the webhook destination
+   - Go to your repository → Settings → Secrets and variables → Actions
+   - Click "New repository secret" for each of the following:
+     - `GITHUB_TOKEN`: Your GitHub personal access token (with repo permissions)
+     - `GITHUB_WEBHOOK_SECRET`: The secret for webhook verification
+     - `GITHUB_USERNAME`: Your GitHub username
+     - `WEBHOOK_URL`: The URL for the webhook destination (e.g., `http://65.21.253.0:8000/github`)
 
 2. The workflow will automatically run weekly, or you can trigger it manually from the Actions tab.
 
