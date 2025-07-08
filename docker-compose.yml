@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  discord-github-bot:
+    build: .
+    container_name: discord-github-bot
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - bot-network
+    labels:
+      # Traefik labels for reverse proxy
+      - "traefik.enable=true"
+      - "traefik.http.routers.discord-github-bot.rule=Host(`bot.yourdomain.com`)"
+      - "traefik.http.routers.discord-github-bot.entrypoints=websecure"
+      - "traefik.http.routers.discord-github-bot.tls.certresolver=myresolver"
+      - "traefik.http.services.discord-github-bot.loadbalancer.server.port=8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Traefik reverse proxy
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/traefik.yml:ro
+      - ./acme.json:/acme.json
+    networks:
+      - bot-network
+
+networks:
+  bot-network:
+    driver: bridge
+
+volumes:
+  logs:

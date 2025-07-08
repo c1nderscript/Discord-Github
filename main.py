@@ -67,7 +67,7 @@ async def route_github_event(event_type: str, payload: dict):
     """Route GitHub event to appropriate Discord channel."""
     if event_type == "push":
         embed = format_push_event(payload)
-        await send_to_discord(settings.channel_commits, embed=embed)
+        await send_to_discord(settings.channel_commits, embed=embed, use_webhook=True)
     elif event_type == "pull_request":
         action = payload.get("action")
         pr = payload.get("pull_request", {})
@@ -75,24 +75,24 @@ async def route_github_event(event_type: str, payload: dict):
         
         if action == "closed" and is_merged:
             embed = format_merge_event(payload)
-            await send_to_discord(settings.channel_code_merges, embed=embed)
+            await send_to_discord(settings.channel_code_merges, embed=embed, use_webhook=True)
         else:
             embed = format_pull_request_event(payload)
-            await send_to_discord(settings.channel_pull_requests, embed=embed)
+            await send_to_discord(settings.channel_pull_requests, embed=embed, use_webhook=True)
     elif event_type == "issues":
         embed = format_issue_event(payload)
-        await send_to_discord(settings.channel_issues, embed=embed)
+        await send_to_discord(settings.channel_issues, embed=embed, use_webhook=True)
     elif event_type == "release":
         embed = format_release_event(payload)
-        await send_to_discord(settings.channel_releases, embed=embed)
+        await send_to_discord(settings.channel_releases, embed=embed, use_webhook=True)
     elif event_type == "deployment_status":
         embed = format_deployment_event(payload)
-        await send_to_discord(settings.channel_deployment_status, embed=embed)
+        await send_to_discord(settings.channel_deployment_status, embed=embed, use_webhook=True)
     elif event_type == "gollum":
         embed = format_gollum_event(payload)
-        await send_to_discord(settings.channel_gollum, embed=embed)
+        await send_to_discord(settings.channel_gollum, embed=embed, use_webhook=True)
     else:
         embed = format_generic_event(event_type, payload)
-        await send_to_discord(settings.channel_bot_logs, embed=embed)
+        await send_to_discord(settings.channel_bot_logs, embed=embed, use_webhook=True)
     
     logger.info(f"Event {event_type} routed successfully.")

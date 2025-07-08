@@ -1,0 +1,28 @@
+[Unit]
+Description=Discord GitHub Bot
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cinder
+Group=cinder
+WorkingDirectory=/home/cinder/Documents/D_Projects/Discord-Github
+Environment=PATH=/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin
+EnvironmentFile=-/home/cinder/Documents/D_Projects/Discord-Github/.env
+ExecStart=/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin/python run.py
+Restart=always
+RestartSec=10
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStopSec=30
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/cinder/Documents/D_Projects/Discord-Github
+NoNewPrivileges=true
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=discord-github-bot
+
+[Install]
+WantedBy=multi-user.target

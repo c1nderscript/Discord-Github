@@ -34,6 +34,27 @@ class DiscordBot:
         except Exception as e:
             logger.error(f"Failed to start Discord bot: {e}")
             raise
+
+    async def send_to_webhook(self, url: str, content: str = None, embed: discord.Embed = None):
+        """Send a message to a Discord webhook URL."""
+        import aiohttp
+        headers = {'Content-Type': 'application/json'}
+        data = {}
+        if content:
+            data['content'] = content
+        if embed:
+            data['embeds'] = [embed.to_dict()]
+        
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(url, json=data, headers=headers) as response:
+                    if response.status != 204:
+                        logger.error(f"Failed to send message to webhook: {response.status}")
+                        logger.error(f"Response text: {await response.text()}")
+                    else:
+                        logger.info("Message sent successfully to webhook")
+            except Exception as e:
+                logger.error(f"Exception occurred while sending to webhook: {e}")
     
     async def send_to_channel(self, channel_id: int, content: str = None, embed: discord.Embed = None):
         """Send a message to a specific Discord channel."""
@@ -97,6 +118,15 @@ async def on_error(event, *args, **kwargs):
 discord_bot_instance = DiscordBot()
 
 
-async def send_to_discord(channel_id: int, content: str = None, embed: discord.Embed = None):
+async def send_to_discord(channel_id: int, content: str = None, embed: discord.Embed = None, use_webhook: bool = False):
     """Global function to send messages to Discord."""
-    await discord_bot_instance.send_to_channel(channel_id, content, embed)
+    if use_webhook:
+        # Use webhook URL from environment variable or settings
+        webhook_url = getattr(settings, 'discord_webhook_url', None)
+        if webhook_url:
+            await discord_bot_instance.send_to_webhook(webhook_url, content, embed)
+        else:
+            # Fallback to channel send if no webhook URL configured
+            await discord_bot_instance.send_to_channel(channel_id, content, embed)
+    else:
+        await discord_bot_instance.send_to_channel(channel_id, content, embed)

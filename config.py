@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     
     # Discord Bot Configuration
     discord_bot_token: str
+    discord_webhook_url: Optional[str] = None
     
     # GitHub Webhook Configuration
     github_webhook_secret: Optional[str] = None
