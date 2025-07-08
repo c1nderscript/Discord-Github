@@ -1,6 +1,39 @@
 # Discord-Github
 
-FastAPI-based webhook router that forwards GitHub events to Discord channels.
+FastAPI-based webhook router that forwards GitHub events to Discord channels. This document provides a complete setup guide and instructions for maintaining each component, including GitHub webhooks.
+
+## How to Re-run the Webhook Script
+
+To re-run the webhook script `add_all_webhooks.py` when new repositories are created, follow these steps:
+
+1. Ensure your `.env` file is correctly configured with the following variables:
+   - `GITHUB_TOKEN`: Your GitHub personal access token with repository access.
+   - `GITHUB_WEBHOOK_SECRET`: The secret for verifying webhooks.
+   - `GITHUB_USERNAME`: Your GitHub username.
+   - `WEBHOOK_URL`: The URL for the webhook destination (e.g., your service endpoint).
+
+2. Run the script using:
+   ```bash
+   python add_all_webhooks.py
+   ```
+
+This will add the necessary webhooks to all repositories associated with your GitHub account.
+
+### Automated Weekly Execution
+
+The repository includes a GitHub Actions workflow that automatically runs the webhook script every Sunday at 2 AM UTC to ensure all repositories have the required webhooks.
+
+**To enable the automated workflow:**
+
+1. Set up the following repository secrets in your GitHub repository settings:
+   - `GITHUB_TOKEN`: Your GitHub personal access token
+   - `GITHUB_WEBHOOK_SECRET`: The secret for webhook verification
+   - `GITHUB_USERNAME`: Your GitHub username
+   - `WEBHOOK_URL`: The URL for the webhook destination
+
+2. The workflow will automatically run weekly, or you can trigger it manually from the Actions tab.
+
+3. If the workflow fails, it will automatically create an issue in the repository for investigation.
 
 ## Setup
 

@@ -1,18 +1,50 @@
 #!/usr/bin/env python3
 """
 Script to add GitHub webhooks to ALL repositories using GitHub API.
+
+This script will:
+1. Fetch all repositories for the authenticated user
+2. Add webhooks to each repository for various GitHub events
+3. Handle existing webhooks gracefully
+4. Provide detailed progress and summary information
+
+Environment variables required:
+- GITHUB_TOKEN: GitHub personal access token with repo permissions
+- GITHUB_WEBHOOK_SECRET: Secret for webhook verification
+- GITHUB_USERNAME: GitHub username (optional, defaults to authenticated user)
+- WEBHOOK_URL: URL endpoint for the webhook (optional, uses default)
 """
 
 import json
+import os
 import requests
 import time
 from typing import List, Dict
 
-# Configuration - Replace with your actual values
-WEBHOOK_URL = "http://65.21.253.0:8000/github"
-WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_HERE"  # Replace with your actual secret
-GITHUB_TOKEN = "YOUR_GITHUB_TOKEN_HERE"  # Replace with your actual token
-GITHUB_USERNAME = "c1nderscript"
+# Try to load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("⚠️  python-dotenv not installed. Install it with: pip install python-dotenv")
+    print("Continuing with system environment variables...")
+
+# Configuration from environment variables
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "http://65.21.253.0:8000/github")
+WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "c1nderscript")
+
+# Validate required environment variables
+if not GITHUB_TOKEN:
+    print("❌ Error: GITHUB_TOKEN environment variable is required")
+    print("Please set it in your .env file or export it as an environment variable")
+    exit(1)
+
+if not WEBHOOK_SECRET:
+    print("❌ Error: GITHUB_WEBHOOK_SECRET environment variable is required")
+    print("Please set it in your .env file or export it as an environment variable")
+    exit(1)
 
 def get_all_repositories() -> List[str]:
     """
