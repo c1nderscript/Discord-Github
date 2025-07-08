@@ -1,0 +1,29 @@
+[
+    {
+        "id": 1012363658,
+        "name": "Development-Setup",
+        "full_name": "c1nderscript/Development-Setup",
+        "description": "Quick Install Sync",
+        "private": false,
+        "html_url": "https://github.com/c1nderscript/Development-Setup",
+        "language": "Shell"
+    },
+    {
+        "id": 1011949105,
+        "name": "Custom-MCP-Server",
+        "full_name": "c1nderscript/Custom-MCP-Server",
+        "private": true,
+        "html_url": "https://github.com/c1nderscript/Custom-MCP-Server",
+        "language": "Rust"
+    },
+    {
+        "id": 1016274789,
+        "name": "Discord-Github",
+        "full_name": "c1nderscript/Discord-Github",
+        "description": "A bot for managing Github Discord Workflows",
+        "private": false,
+        "html_url": "https://github.com/c1nderscript/Discord-Github",
+        "language": "Python"
+    }
+    // additional repositories truncated for brevity
+]
