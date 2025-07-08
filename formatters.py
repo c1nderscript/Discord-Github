@@ -92,7 +92,7 @@ def format_pull_request_event(payload: Dict[str, Any]) -> discord.Embed:
         'closed': discord.Color.red(),
         'reopened': discord.Color.orange(),
         'ready_for_review': discord.Color.blue(),
-        'draft': discord.Color.grey()
+        'draft': discord.Color.light_grey(),
     }
     
     color = color_map.get(action, discord.Color.blue())
@@ -206,7 +206,7 @@ def format_issue_event(payload: Dict[str, Any]) -> discord.Embed:
         'closed': discord.Color.red(),
         'reopened': discord.Color.orange(),
         'assigned': discord.Color.blue(),
-        'unassigned': discord.Color.grey()
+        'unassigned': discord.Color.light_grey(),
     }
     
     color = color_map.get(action, discord.Color.blue())
