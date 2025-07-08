@@ -63,14 +63,7 @@ def add_webhook_to_repo(repo_name: str) -> bool:
     webhook_data = {
         "name": "web",
         "active": True,
-        "events": [
-            "push",
-            "pull_request", 
-            "issues",
-            "release",
-            "deployment_status",
-            "gollum"
-        ],
+        "events": ["*"],  # Subscribe to all available events
         "config": {
             "url": WEBHOOK_URL,
             "content_type": "json",
