@@ -1,6 +1,7 @@
 """Main server endpoint for receiving GitHub webhooks."""
 
 import logging
+import asyncio
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -31,7 +32,7 @@ logger = logging.getLogger("uvicorn")
 async def startup_event():
     """Startup event to initialize Discord bot."""
     logger.info("Starting up Discord bot...")
-    await discord_bot_instance.start()
+    asyncio.create_task(discord_bot_instance.start())
 
 
 @app.post("/github")
