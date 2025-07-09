@@ -8,3 +8,6 @@ env/
 
 # Environment files
 .env
+
+# Log files
+webhook_server.log
