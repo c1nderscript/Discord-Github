@@ -26,6 +26,7 @@ class TestCleanupScript(unittest.TestCase):
         self.addCleanup(self.tmpdir.cleanup)
         # Ensure the Discord bot is marked as ready
         from discord_bot import discord_bot_instance
+
         discord_bot_instance.ready = True
 
     def _mock_session(self, state: str):
@@ -59,12 +60,11 @@ class TestCleanupScript(unittest.TestCase):
     def test_cleanup_closed_pr(self):
         pr_map.save_pr_map({"test/repo#1": 111})
         mock_session = self._mock_session("closed")
-        with patch("cleanup.aiohttp.ClientSession", return_value=mock_session()), \
-             patch(
-                 "discord_bot.discord_bot_instance.delete_message_from_channel",
-                 new_callable=AsyncMock,
-                 return_value=True,
-             ) as mock_delete:
+        with patch("cleanup.aiohttp.ClientSession", return_value=mock_session()), patch(
+            "discord_bot.discord_bot_instance.delete_message_from_channel",
+            new_callable=AsyncMock,
+            return_value=True,
+        ) as mock_delete:
             asyncio.run(cleanup.cleanup_pr_messages())
             mock_delete.assert_awaited_once_with(settings.channel_pull_requests, 111)
         self.assertEqual(pr_map.load_pr_map(), {})
@@ -72,12 +72,11 @@ class TestCleanupScript(unittest.TestCase):
     def test_cleanup_open_pr(self):
         pr_map.save_pr_map({"test/repo#1": 111})
         mock_session = self._mock_session("open")
-        with patch("cleanup.aiohttp.ClientSession", return_value=mock_session()), \
-             patch(
-                 "discord_bot.discord_bot_instance.delete_message_from_channel",
-                 new_callable=AsyncMock,
-                 return_value=True,
-             ) as mock_delete:
+        with patch("cleanup.aiohttp.ClientSession", return_value=mock_session()), patch(
+            "discord_bot.discord_bot_instance.delete_message_from_channel",
+            new_callable=AsyncMock,
+            return_value=True,
+        ) as mock_delete:
             asyncio.run(cleanup.cleanup_pr_messages())
             mock_delete.assert_not_called()
         self.assertEqual(pr_map.load_pr_map(), {"test/repo#1": 111})
