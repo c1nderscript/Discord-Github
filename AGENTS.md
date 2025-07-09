@@ -418,3 +418,8 @@
    ------
 
    **Note**: This agents.md file should be updated whenever new event types are added, channel mappings change, or significant architectural modifications are made to the webhook routing system.
+
+   ## Changelog
+
+   ### 2025-07-09
+   - Updated pull requests channel mapping to ID 1392485974398861354
