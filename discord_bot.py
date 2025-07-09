@@ -5,6 +5,9 @@ from discord.ext import commands
 import asyncio
 import logging
 from typing import Optional
+from datetime import datetime, timedelta
+
+from pr_map import load_pr_map, save_pr_map
 
 from config import settings
 
@@ -62,6 +65,39 @@ class DiscordBot:
         except Exception as e:
             logger.error(f"Unexpected error deleting message: {e}")
             return False
+
+    async def purge_old_messages(self, channel_id: int, days: int) -> None:
+        """Purge messages older than the given number of days from a channel."""
+        if not self.ready:
+            await self.bot.wait_until_ready()
+
+        try:
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                raise ValueError(f"Channel {channel_id} not found")
+
+            cutoff = datetime.utcnow() - timedelta(days=days)
+            deleted = await channel.purge(before=cutoff)
+
+            if channel_id == settings.channel_pull_requests:
+                deleted_ids = {msg.id for msg in deleted}
+                if deleted_ids:
+                    pr_map_data = load_pr_map()
+                    updated = False
+                    for key, msg_id in list(pr_map_data.items()):
+                        if msg_id in deleted_ids:
+                            pr_map_data.pop(key)
+                            updated = True
+                    if updated:
+                        save_pr_map(pr_map_data)
+        except Exception as e:
+            logger.error(f"Failed to purge messages in channel {channel_id}: {e}")
+            try:
+                logs_channel = self.bot.get_channel(settings.channel_bot_logs)
+                if logs_channel:
+                    await logs_channel.send(f"❌ Failed to purge channel {channel_id}: {e}")
+            except Exception:
+                pass
 
     async def send_to_webhook(self, url: str, content: str = None, embed: discord.Embed = None):
         """Send a message to a Discord webhook URL."""

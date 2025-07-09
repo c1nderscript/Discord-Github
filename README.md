@@ -61,11 +61,19 @@ use for sending messages. For example:
 DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_webhook_token/github
 ```
 
+You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
+If not set, messages older than 30 days are removed.
+
 ## Pull Request Message Cleanup
 
 When a pull request is opened or marked ready for review, the bot records the Discord message ID in `pr_message_map.json`.
 Once the pull request is closed (merged or not), the stored message is automatically deleted from the `#pull-requests` channel.
 The JSON file maps `repo_name#pr_number` to the associated Discord message ID and is created at runtime in the project root.
+
+
+## Message Retention
+
+Old messages can clutter channels. The bot automatically removes messages older than `MESSAGE_RETENTION_DAYS` from the commits, pull requests and releases channels during startup. Set this environment variable to control the retention period (default is 30 days).
 
 
 The utility script `cleanup_pr_messages.py` can remove stale entries if events were missed. It loads `pr_message_map.json`, checks each pull request's state via the GitHub API, deletes the corresponding Discord message when the PR is closed or merged, and updates the file.
@@ -93,5 +101,6 @@ python pr_cleanup_tool.py
 ```
 
 This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
+
 
 
