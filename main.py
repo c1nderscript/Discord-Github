@@ -21,6 +21,10 @@ from formatters import (
     format_release_event,
     format_deployment_event,
     format_gollum_event,
+    format_workflow_run,
+    format_workflow_job,
+    format_check_run,
+    format_check_suite,
     format_generic_event
 )
 
@@ -136,6 +140,18 @@ async def route_github_event(event_type: str, payload: dict):
     elif event_type == "deployment_status":
         embed = format_deployment_event(payload)
         await send_to_discord(settings.channel_deployment_status, embed=embed)
+    elif event_type == "workflow_run":
+        embed = format_workflow_run(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
+    elif event_type == "workflow_job":
+        embed = format_workflow_job(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
+    elif event_type == "check_run":
+        embed = format_check_run(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
+    elif event_type == "check_suite":
+        embed = format_check_suite(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
     elif event_type == "gollum":
         embed = format_gollum_event(payload)
         await send_to_discord(settings.channel_gollum, embed=embed)
