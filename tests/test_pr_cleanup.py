@@ -13,6 +13,7 @@ os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
 import pr_map
 import main
+import pull_request_handler
 from config import settings
 
 
@@ -38,7 +39,7 @@ class TestPRMessageCleanup(unittest.TestCase):
             },
             "repository": {"full_name": "test/repo"},
         }
-        with patch("main.send_to_discord", new_callable=AsyncMock, return_value=message):
+        with patch("pull_request_handler.send_to_discord", new_callable=AsyncMock, return_value=message):
             asyncio.run(main.route_github_event("pull_request", payload))
         data = pr_map.load_pr_map()
         self.assertEqual(data.get("test/repo#1"), 123)
@@ -57,7 +58,7 @@ class TestPRMessageCleanup(unittest.TestCase):
             },
             "repository": {"full_name": "test/repo"},
         }
-        with patch("main.send_to_discord", new_callable=AsyncMock) as mock_send, \
+        with patch("pull_request_handler.send_to_discord", new_callable=AsyncMock) as mock_send, \
              patch(
                  "discord_bot.discord_bot_instance.delete_message_from_channel",
                  new_callable=AsyncMock,
