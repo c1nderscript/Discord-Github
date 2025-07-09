@@ -2,6 +2,7 @@
 
 from pydantic_settings import BaseSettings
 from typing import Optional
+from agents_config import AGENT_METADATA, LOGS_DIR, STATE_DIR
 
 
 class Settings(BaseSettings):
@@ -23,7 +24,7 @@ class Settings(BaseSettings):
     
     # Discord Channel IDs
     channel_commits: int = 1392213436720615504
-    channel_pull_requests: int = 1392213464377724928
+    channel_pull_requests: int = 1392485974398861354
     channel_code_merges: int = 1392213492156727387
     channel_issues: int = 1392213509382737991
     channel_releases: int = 1392213528542445628
@@ -33,6 +34,11 @@ class Settings(BaseSettings):
 
     # Message retention configuration
     message_retention_days: int = 30
+    
+    # Agent compliance paths
+    logs_directory: str = str(LOGS_DIR)
+    state_directory: str = str(STATE_DIR)
+    agent_metadata: dict = AGENT_METADATA
     
     class Config:
         env_file = ".env"

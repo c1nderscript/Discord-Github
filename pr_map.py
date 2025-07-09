@@ -1,22 +1,21 @@
+"""Utility functions for managing the PR message map."""
+
 import json
-from pathlib import Path
-from typing import Dict
+from logging_config import get_state_file_path
 
-PR_MAP_FILE = Path("pr_message_map.json")
-
-
-def load_pr_map() -> Dict[str, int]:
-    """Load the PR message map from disk."""
-    if PR_MAP_FILE.exists():
-        try:
-            with PR_MAP_FILE.open("r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
+PR_MAP_FILE = get_state_file_path("pr_message_map.json")
 
 
-def save_pr_map(data: Dict[str, int]) -> None:
-    """Save the PR message map to disk."""
-    with PR_MAP_FILE.open("w", encoding="utf-8") as f:
-        json.dump(data, f)
+def load_pr_map():
+    """Load the PR message map from the state file."""
+    try:
+        with open(PR_MAP_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+
+def save_pr_map(pr_map):
+    """Save the PR message map to the state file."""
+    with open(PR_MAP_FILE, 'w') as f:
+        json.dump(pr_map, f, indent=2)

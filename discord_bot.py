@@ -7,13 +7,13 @@ import logging
 from typing import Optional
 from datetime import datetime, timedelta
 
+from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
-
 from config import settings
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Setup logging
+setup_logging()
+logger = logging.getLogger("discord_bot")
 
 # Discord bot intents
 intents = discord.Intents.default()

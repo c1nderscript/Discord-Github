@@ -5,6 +5,7 @@ import asyncio
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 
+from logging_config import setup_logging
 from config import settings
 from discord_bot import send_to_discord, discord_bot_instance
 
@@ -25,10 +26,11 @@ from formatters import (
     format_generic_event
 )
 
+# Setup logging
+setup_logging()
 
 # Initialize FastAPI app
 app = FastAPI()
-
 
 # Logger
 logger = logging.getLogger("uvicorn")
