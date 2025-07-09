@@ -93,7 +93,7 @@
    **Pull Request Events** require context-aware routing:
 
    - `action == "closed" AND merged == true` → Code Merges channel (1392213492156727387)
-   - All other PR actions → Pull Requests channel (1392213464377724928)
+   - All other PR actions → Pull Requests channel (1392485974398861354)
 
    **Error Handling**: Any failed channel sends should attempt fallback to bot logs channel.
 
@@ -162,7 +162,7 @@
    
    # Discord Channel IDs (can override defaults)
    CHANNEL_COMMITS=1392213436720615504
-   CHANNEL_PULL_REQUESTS=1392213464377724928
+   CHANNEL_PULL_REQUESTS=1392485974398861354
    CHANNEL_CODE_MERGES=1392213492156727387
    CHANNEL_ISSUES=1392213509382737991
    CHANNEL_RELEASES=1392213528542445628
