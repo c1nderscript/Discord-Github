@@ -35,6 +35,18 @@ async def startup_event():
     logger.info("Starting up Discord bot...")
     asyncio.create_task(discord_bot_instance.start())
 
+    purge_channels = [
+        settings.channel_commits,
+        settings.channel_pull_requests,
+        settings.channel_releases,
+    ]
+    for channel_id in purge_channels:
+        asyncio.create_task(
+            discord_bot_instance.purge_old_messages(
+                channel_id, settings.message_retention_days
+            )
+        )
+
 
 @app.post("/github")
 async def github_webhook(request: Request):
