@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     channel_deployment_status: int = 1392213551665381486
     channel_gollum: int = 1392213582963540028
     channel_bot_logs: int = 1392213610167664670
+
+    # Message retention configuration
+    message_retention_days: int = 30
     
     class Config:
         env_file = ".env"
