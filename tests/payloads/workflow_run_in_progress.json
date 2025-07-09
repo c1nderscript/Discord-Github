@@ -1,0 +1,35 @@
+{
+  "action": "in_progress",
+  "workflow_run": {
+    "id": 1234567892,
+    "name": "Deploy to Production",
+    "head_branch": "main",
+    "head_sha": "ghi789012345678901234567890123456789012345",
+    "status": "in_progress",
+    "conclusion": null,
+    "workflow_id": 123457,
+    "url": "https://api.github.com/repos/owner/repo/actions/runs/1234567892",
+    "html_url": "https://github.com/owner/repo/actions/runs/1234567892",
+    "created_at": "2023-01-01T14:00:00Z",
+    "updated_at": "2023-01-01T14:02:00Z",
+    "run_started_at": "2023-01-01T14:00:30Z",
+    "run_attempt": 1,
+    "triggering_actor": {
+      "login": "devops",
+      "avatar_url": "https://github.com/images/error/devops_happy.gif"
+    },
+    "event": "workflow_dispatch",
+    "display_title": "Manual deployment to production"
+  },
+  "repository": {
+    "id": 123456789,
+    "name": "repo",
+    "full_name": "owner/repo",
+    "html_url": "https://github.com/owner/repo",
+    "description": "A sample repository"
+  },
+  "sender": {
+    "login": "devops",
+    "avatar_url": "https://github.com/images/error/devops_happy.gif"
+  }
+}

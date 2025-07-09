@@ -1,0 +1,52 @@
+{
+  "action": "completed",
+  "workflow_job": {
+    "id": 9876543210,
+    "run_id": 1234567890,
+    "run_url": "https://api.github.com/repos/owner/repo/actions/runs/1234567890",
+    "node_id": "MDg6Q2hlY2tSdW4xMjg2MjAyMjg=",
+    "head_sha": "abc123456789abcdef0123456789abcdef01234567",
+    "url": "https://api.github.com/repos/owner/repo/actions/jobs/9876543210",
+    "html_url": "https://github.com/owner/repo/actions/runs/1234567890/jobs/9876543210",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at": "2023-01-01T12:00:30Z",
+    "completed_at": "2023-01-01T12:03:45Z",
+    "name": "build",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2023-01-01T12:00:30Z",
+        "completed_at": "2023-01-01T12:00:45Z"
+      },
+      {
+        "name": "Run tests",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2023-01-01T12:00:45Z",
+        "completed_at": "2023-01-01T12:03:30Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/owner/repo/check-runs/9876543210",
+    "labels": ["ubuntu-latest"],
+    "runner_id": 1,
+    "runner_name": "GitHub Actions 1",
+    "runner_group_id": 1,
+    "runner_group_name": "GitHub Actions"
+  },
+  "repository": {
+    "id": 123456789,
+    "name": "repo",
+    "full_name": "owner/repo",
+    "html_url": "https://github.com/owner/repo",
+    "description": "A sample repository"
+  },
+  "sender": {
+    "login": "johndoe",
+    "avatar_url": "https://github.com/images/error/johndoe_happy.gif"
+  }
+}

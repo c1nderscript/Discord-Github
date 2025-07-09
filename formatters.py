@@ -73,6 +73,379 @@ def format_push_event(payload: Dict[str, Any]) -> discord.Embed:
     return embed
 
 
+def get_status_color(status: str, conclusion: Optional[str] = None) -> discord.Color:
+    """Get Discord color based on status and conclusion."""
+    if conclusion:
+        if conclusion == "success":
+            return discord.Color.green()
+        elif conclusion in ["failure", "cancelled"]:
+            return discord.Color.red()
+        elif conclusion == "cancelled":
+            return discord.Color.light_grey()
+        else:
+            return discord.Color.orange()
+    
+    if status == "completed":
+        return discord.Color.green()
+    elif status in ["queued", "in_progress"]:
+        return discord.Color.orange()
+    elif status == "cancelled":
+        return discord.Color.light_grey()
+    else:
+        return discord.Color.blue()
+
+
+def get_status_icon(status: str, conclusion: Optional[str] = None) -> str:
+    """Get emoji icon based on status and conclusion."""
+    if conclusion:
+        if conclusion == "success":
+            return "✅"
+        elif conclusion == "failure":
+            return "❌"
+        elif conclusion == "cancelled":
+            return "🚫"
+        else:
+            return "⚠️"
+    
+    if status == "completed":
+        return "✅"
+    elif status == "queued":
+        return "⏳"
+    elif status == "in_progress":
+        return "🔄"
+    elif status == "cancelled":
+        return "🚫"
+    else:
+        return "❓"
+
+
+def calculate_duration(started_at: Optional[str], completed_at: Optional[str]) -> str:
+    """Calculate and format duration between two timestamps."""
+    if not started_at or not completed_at:
+        return "N/A"
+    
+    try:
+        start = datetime.fromisoformat(started_at.replace('Z', '+00:00'))
+        end = datetime.fromisoformat(completed_at.replace('Z', '+00:00'))
+        duration = end - start
+        
+        total_seconds = int(duration.total_seconds())
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        
+        if minutes > 0:
+            return f"{minutes}m {seconds}s"
+        else:
+            return f"{seconds}s"
+    except Exception:
+        return "N/A"
+
+
+def format_workflow_run(event: Dict[str, Any]) -> discord.Embed:
+    """Format a workflow run event for Discord."""
+    workflow_run = event.get('workflow_run', {})
+    repo = event.get('repository', {})
+    
+    name = workflow_run.get('name', 'Unknown Workflow')
+    run_id = workflow_run.get('id', 0)
+    status = workflow_run.get('status', 'unknown')
+    conclusion = workflow_run.get('conclusion')
+    head_branch = workflow_run.get('head_branch', 'unknown')
+    head_sha = workflow_run.get('head_sha', '')[:7]
+    html_url = workflow_run.get('html_url', '')
+    
+    repo_name = repo.get('full_name', 'Unknown repo')
+    repo_url = repo.get('html_url', '')
+    
+    # Get appropriate color and icon
+    color = get_status_color(status, conclusion)
+    icon = get_status_icon(status, conclusion)
+    
+    # Calculate duration
+    duration = calculate_duration(
+        workflow_run.get('run_started_at'),
+        workflow_run.get('updated_at')
+    )
+    
+    # Format status display
+    status_display = conclusion.title() if conclusion else status.replace('_', ' ').title()
+    
+    embed = discord.Embed(
+        title=f"{icon} Workflow Run: {name}",
+        url=html_url,
+        color=color
+    )
+    
+    embed.add_field(
+        name="Repository",
+        value=f"[{repo_name}]({repo_url})",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Branch",
+        value=head_branch,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Commit",
+        value=f"`{head_sha}`",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Status",
+        value=status_display,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Duration",
+        value=duration,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Run ID",
+        value=f"#{run_id}",
+        inline=True
+    )
+    
+    return embed
+
+
+def format_workflow_job(event: Dict[str, Any]) -> discord.Embed:
+    """Format a workflow job event for Discord."""
+    workflow_job = event.get('workflow_job', {})
+    repo = event.get('repository', {})
+    
+    name = workflow_job.get('name', 'Unknown Job')
+    job_id = workflow_job.get('id', 0)
+    run_id = workflow_job.get('run_id', 0)
+    status = workflow_job.get('status', 'unknown')
+    conclusion = workflow_job.get('conclusion')
+    head_sha = workflow_job.get('head_sha', '')[:7]
+    html_url = workflow_job.get('html_url', '')
+    
+    repo_name = repo.get('full_name', 'Unknown repo')
+    repo_url = repo.get('html_url', '')
+    
+    # Get appropriate color and icon
+    color = get_status_color(status, conclusion)
+    icon = get_status_icon(status, conclusion)
+    
+    # Calculate duration
+    duration = calculate_duration(
+        workflow_job.get('started_at'),
+        workflow_job.get('completed_at')
+    )
+    
+    # Format status display
+    status_display = conclusion.title() if conclusion else status.replace('_', ' ').title()
+    
+    embed = discord.Embed(
+        title=f"{icon} Workflow Job: {name}",
+        url=html_url,
+        color=color
+    )
+    
+    embed.add_field(
+        name="Repository",
+        value=f"[{repo_name}]({repo_url})",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Commit",
+        value=f"`{head_sha}`",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Status",
+        value=status_display,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Duration",
+        value=duration,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Job ID",
+        value=f"#{job_id}",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Run ID",
+        value=f"#{run_id}",
+        inline=True
+    )
+    
+    return embed
+
+
+def format_check_run(event: Dict[str, Any]) -> discord.Embed:
+    """Format a check run event for Discord."""
+    check_run = event.get('check_run', {})
+    repo = event.get('repository', {})
+    
+    name = check_run.get('name', 'Unknown Check')
+    check_id = check_run.get('id', 0)
+    status = check_run.get('status', 'unknown')
+    conclusion = check_run.get('conclusion')
+    head_sha = check_run.get('head_sha', '')[:7]
+    html_url = check_run.get('html_url', '')
+    details_url = check_run.get('details_url', html_url)
+    
+    repo_name = repo.get('full_name', 'Unknown repo')
+    repo_url = repo.get('html_url', '')
+    
+    # Get appropriate color and icon
+    color = get_status_color(status, conclusion)
+    icon = get_status_icon(status, conclusion)
+    
+    # Calculate duration
+    duration = calculate_duration(
+        check_run.get('started_at'),
+        check_run.get('completed_at')
+    )
+    
+    # Format status display
+    status_display = conclusion.title() if conclusion else status.replace('_', ' ').title()
+    
+    # Get branch from check suite if available
+    check_suite = check_run.get('check_suite', {})
+    branch = check_suite.get('head_branch', 'unknown')
+    
+    embed = discord.Embed(
+        title=f"{icon} Check Run: {name}",
+        url=details_url,
+        color=color
+    )
+    
+    embed.add_field(
+        name="Repository",
+        value=f"[{repo_name}]({repo_url})",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Branch",
+        value=branch,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Commit",
+        value=f"`{head_sha}`",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Status",
+        value=status_display,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Duration",
+        value=duration,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Check ID",
+        value=f"#{check_id}",
+        inline=True
+    )
+    
+    return embed
+
+
+def format_check_suite(event: Dict[str, Any]) -> discord.Embed:
+    """Format a check suite event for Discord."""
+    check_suite = event.get('check_suite', {})
+    repo = event.get('repository', {})
+    
+    suite_id = check_suite.get('id', 0)
+    status = check_suite.get('status', 'unknown')
+    conclusion = check_suite.get('conclusion')
+    head_branch = check_suite.get('head_branch', 'unknown')
+    head_sha = check_suite.get('head_sha', '')[:7]
+    
+    repo_name = repo.get('full_name', 'Unknown repo')
+    repo_url = repo.get('html_url', '')
+    
+    # Get appropriate color and icon
+    color = get_status_color(status, conclusion)
+    icon = get_status_icon(status, conclusion)
+    
+    # Calculate duration
+    duration = calculate_duration(
+        check_suite.get('created_at'),
+        check_suite.get('updated_at')
+    )
+    
+    # Format status display
+    status_display = conclusion.title() if conclusion else status.replace('_', ' ').title()
+    
+    # Get app name if available
+    app = check_suite.get('app', {})
+    app_name = app.get('name', 'Unknown App')
+    
+    # Build URL to check suite (GitHub doesn't provide a direct HTML URL for check suites)
+    suite_url = f"{repo_url}/commits/{head_sha}/checks"
+    
+    embed = discord.Embed(
+        title=f"{icon} Check Suite: {app_name}",
+        url=suite_url,
+        color=color
+    )
+    
+    embed.add_field(
+        name="Repository",
+        value=f"[{repo_name}]({repo_url})",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Branch",
+        value=head_branch,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Commit",
+        value=f"`{head_sha}`",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Status",
+        value=status_display,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Duration",
+        value=duration,
+        inline=True
+    )
+    
+    embed.add_field(
+        name="Suite ID",
+        value=f"#{suite_id}",
+        inline=True
+    )
+    
+    return embed
+
+
 def format_pull_request_event(payload: Dict[str, Any]) -> discord.Embed:
     """Format a pull request event for Discord."""
     action = payload.get('action', '')

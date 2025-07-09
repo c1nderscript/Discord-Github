@@ -1,0 +1,64 @@
+{
+  "action": "completed",
+  "check_suite": {
+    "id": 5678901234,
+    "node_id": "MDEwOkNoZWNrU3VpdGU1Njc4OTAxMjM0",
+    "head_branch": "main",
+    "head_sha": "abc123456789abcdef0123456789abcdef01234567",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://api.github.com/repos/owner/repo/check-suites/5678901234",
+    "before": "def456789012345678901234567890123456789012",
+    "after": "abc123456789abcdef0123456789abcdef01234567",
+    "pull_requests": [],
+    "created_at": "2023-01-01T12:00:00Z",
+    "updated_at": "2023-01-01T12:05:00Z",
+    "app": {
+      "id": 15368,
+      "slug": "github-actions",
+      "node_id": "MDM6QXBwMTUzNjg=",
+      "owner": {
+        "login": "github",
+        "id": 9919,
+        "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+        "avatar_url": "https://github.com/images/error/github_happy.gif",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/github",
+        "html_url": "https://github.com/github",
+        "type": "Organization",
+        "site_admin": false
+      },
+      "name": "GitHub Actions",
+      "description": "Automate your workflow from idea to production",
+      "external_url": "https://help.github.com/en/actions",
+      "html_url": "https://github.com/apps/github-actions",
+      "created_at": "2018-07-30T09:30:17Z",
+      "updated_at": "2019-12-10T19:04:12Z"
+    },
+    "head_commit": {
+      "id": "abc123456789abcdef0123456789abcdef01234567",
+      "tree_id": "827efc6d56897b048c772eb4087f854f46256132",
+      "message": "Update README.md",
+      "timestamp": "2023-01-01T11:58:00Z",
+      "author": {
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      "committer": {
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+    }
+  },
+  "repository": {
+    "id": 123456789,
+    "name": "repo",
+    "full_name": "owner/repo",
+    "html_url": "https://github.com/owner/repo",
+    "description": "A sample repository"
+  },
+  "sender": {
+    "login": "johndoe",
+    "avatar_url": "https://github.com/images/error/johndoe_happy.gif"
+  }
+}

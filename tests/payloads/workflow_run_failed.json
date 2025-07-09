@@ -1,0 +1,35 @@
+{
+  "action": "completed",
+  "workflow_run": {
+    "id": 1234567891,
+    "name": "Build and Test",
+    "head_branch": "feature/bug-fix",
+    "head_sha": "def456789012345678901234567890123456789012",
+    "status": "completed",
+    "conclusion": "failure",
+    "workflow_id": 123456,
+    "url": "https://api.github.com/repos/owner/repo/actions/runs/1234567891",
+    "html_url": "https://github.com/owner/repo/actions/runs/1234567891",
+    "created_at": "2023-01-01T13:00:00Z",
+    "updated_at": "2023-01-01T13:08:00Z",
+    "run_started_at": "2023-01-01T13:00:30Z",
+    "run_attempt": 1,
+    "triggering_actor": {
+      "login": "janedoe",
+      "avatar_url": "https://github.com/images/error/janedoe_happy.gif"
+    },
+    "event": "pull_request",
+    "display_title": "Fix critical bug in authentication"
+  },
+  "repository": {
+    "id": 123456789,
+    "name": "repo",
+    "full_name": "owner/repo",
+    "html_url": "https://github.com/owner/repo",
+    "description": "A sample repository"
+  },
+  "sender": {
+    "login": "janedoe",
+    "avatar_url": "https://github.com/images/error/janedoe_happy.gif"
+  }
+}
