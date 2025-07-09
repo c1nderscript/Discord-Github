@@ -12,6 +12,7 @@ Environment variables required:
 - GITHUB_TOKEN: GitHub personal access token with repo permissions
 - GITHUB_WEBHOOK_SECRET: Secret for webhook verification
 - GITHUB_USERNAME: GitHub username (optional, defaults to authenticated user)
+- BOT_PUBLIC_URL: Base URL for the bot (optional, uses default)
 - WEBHOOK_URL: URL endpoint for the webhook (optional, uses default)
 """
 
@@ -30,7 +31,8 @@ except ImportError:
     print("Continuing with system environment variables...")
 
 # Configuration from environment variables
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "http://65.21.253.0:8000/github")
+BASE_URL = os.getenv("BOT_PUBLIC_URL", "http://65.21.253.0:8000")
+WEBHOOK_URL = f"{BASE_URL}/github"
 WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "c1nderscript")
