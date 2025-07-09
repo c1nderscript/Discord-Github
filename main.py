@@ -2,6 +2,8 @@
 
 import logging
 import asyncio
+
+import discord
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -13,7 +15,11 @@ from pull_request_handler import handle_pull_request_event_with_retry
 from cleanup import cleanup_pr_messages
 
 from pr_map import load_pr_map, save_pr_map
-from github_utils import verify_github_signature, is_github_event_relevant
+from github_utils import (
+    verify_github_signature,
+    is_github_event_relevant,
+    fetch_repo_stats,
+)
 from formatters import (
     format_push_event,
     format_pull_request_event,
@@ -57,6 +63,7 @@ async def startup_event():
     logger.info("Starting up Discord bot...")
     asyncio.create_task(discord_bot_instance.start())
     asyncio.create_task(cleanup_pr_messages())
+    asyncio.create_task(update_github_stats())
 
     purge_channels = [
         settings.channel_commits,
@@ -140,3 +147,60 @@ async def route_github_event(event_type: str, payload: dict):
         await send_to_discord(settings.channel_bot_logs, embed=embed)
     
     logger.info(f"Event {event_type} routed successfully.")
+    await update_github_stats()
+
+
+stats_messages: dict[int, int] = {}
+
+
+async def update_github_stats() -> None:
+    """Update Discord overview channels with GitHub statistics."""
+    try:
+        repo_stats = await fetch_repo_stats()
+    except Exception as exc:  # pragma: no cover - unexpected errors
+        logger.error("Failed to fetch repo stats: %s", exc)
+        return
+
+    total_commits = sum(s.get("commits", 0) for s in repo_stats.values())
+    total_prs = sum(s.get("pull_requests", 0) for s in repo_stats.values())
+    total_merges = sum(s.get("merges", 0) for s in repo_stats.values())
+
+    await discord_bot_instance.update_channel_name(
+        settings.channel_commits, f"{total_commits}-commits"
+    )
+    await discord_bot_instance.update_channel_name(
+        settings.channel_pull_requests, f"{total_prs}-pull-requests"
+    )
+    await discord_bot_instance.update_channel_name(
+        settings.channel_code_merges, f"{total_merges}-merges"
+    )
+
+    commits_embed = discord.Embed(title="Commit Counts", color=discord.Color.blue())
+    prs_embed = discord.Embed(title="Pull Request Counts", color=discord.Color.blurple())
+    merges_embed = discord.Embed(title="Merge Counts", color=discord.Color.green())
+
+    for repo, counts in repo_stats.items():
+        commits_embed.add_field(name=repo, value=str(counts.get("commits", 0)), inline=False)
+        prs_embed.add_field(name=repo, value=str(counts.get("pull_requests", 0)), inline=False)
+        merges_embed.add_field(name=repo, value=str(counts.get("merges", 0)), inline=False)
+
+    async def _send_or_edit(channel_id: int, embed: discord.Embed) -> None:
+        message_id = stats_messages.get(channel_id)
+        channel = discord_bot_instance.bot.get_channel(channel_id)
+        if message_id and channel:
+            try:
+                message = await channel.fetch_message(message_id)
+                await message.edit(embed=embed)
+                return
+            except Exception as exc:  # pragma: no cover - fetch failures
+                logger.error("Failed to edit stats message in %s: %s", channel_id, exc)
+
+        message = await send_to_discord(channel_id, embed=embed)
+        if message:
+            stats_messages[channel_id] = message.id
+
+    await _send_or_edit(settings.channel_commits, commits_embed)
+    await _send_or_edit(settings.channel_pull_requests, prs_embed)
+    await _send_or_edit(settings.channel_code_merges, merges_embed)
+
+    logger.info("GitHub statistics updated")

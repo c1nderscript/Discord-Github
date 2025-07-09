@@ -37,6 +37,7 @@ class TestMessagePurge(unittest.TestCase):
         with patch.object(discord_bot_instance, "start", new_callable=AsyncMock), \
              patch.object(discord_bot_instance, "purge_old_messages", new_callable=AsyncMock) as mock_purge, \
              patch("main.cleanup_pr_messages", new_callable=AsyncMock) as mock_cleanup, \
+             patch("main.update_github_stats", new_callable=AsyncMock), \
              patch("asyncio.create_task", side_effect=fake_create_task):
             asyncio.run(main.startup_event())
 
