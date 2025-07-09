@@ -11,6 +11,7 @@ from discord_bot import send_to_discord, discord_bot_instance
 from pull_request_handler import handle_pull_request_event_with_retry
 
 from cleanup import cleanup_pr_messages
+from github_stats import update_repository_stats
 
 from pr_map import load_pr_map, save_pr_map
 from github_utils import verify_github_signature, is_github_event_relevant
@@ -57,6 +58,7 @@ async def startup_event():
     logger.info("Starting up Discord bot...")
     asyncio.create_task(discord_bot_instance.start())
     asyncio.create_task(cleanup_pr_messages())
+    asyncio.create_task(update_repository_stats())
 
     purge_channels = [
         settings.channel_commits,

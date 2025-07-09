@@ -154,6 +154,48 @@ class DiscordBot:
 
         return None
 
+    async def edit_channel_name(self, channel_id: int, new_name: str) -> bool:
+        """Edit the name of a Discord channel."""
+        if not self.ready:
+            await self.bot.wait_until_ready()
+
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            logger.error(f"Channel {channel_id} not found for rename")
+            return False
+
+        try:
+            await channel.edit(name=new_name)
+            return True
+        except Exception as exc:
+            logger.error(f"Failed to rename channel {channel_id}: {exc}")
+            return False
+
+    async def send_or_update_embed(self, channel_id: int, message_id: Optional[int], embed: discord.Embed) -> Optional[int]:
+        """Send a new embed or update the existing message if ID provided."""
+        if not self.ready:
+            await self.bot.wait_until_ready()
+
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            logger.error(f"Channel {channel_id} not found for update")
+            return None
+
+        try:
+            if message_id:
+                try:
+                    message = await channel.fetch_message(message_id)
+                    await message.edit(embed=embed)
+                    return message.id
+                except Exception:
+                    logger.warning(f"Failed to edit message {message_id} in {channel_id}, sending new one")
+
+            message = await channel.send(embed=embed)
+            return message.id
+        except Exception as exc:
+            logger.error(f"Failed to send/update embed in {channel_id}: {exc}")
+            return None
+
 
 @bot.event
 async def on_ready():

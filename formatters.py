@@ -825,3 +825,36 @@ def format_generic_event(event_type: str, payload: Dict[str, Any]) -> discord.Em
     )
     
     return embed
+
+
+def format_repo_commit_stats(repo_name: str, repo_url: str, total_commits: int) -> discord.Embed:
+    """Format repository commit statistics."""
+    embed = discord.Embed(
+        title=f"📊 {repo_name} Commits",
+        url=repo_url,
+        color=discord.Color.blue(),
+    )
+    embed.add_field(name="Total Commits", value=str(total_commits), inline=False)
+    return embed
+
+
+def format_repo_pr_stats(repo_name: str, repo_url: str, total_prs: int) -> discord.Embed:
+    """Format repository pull request statistics."""
+    embed = discord.Embed(
+        title=f"📊 {repo_name} Pull Requests",
+        url=repo_url,
+        color=discord.Color.blue(),
+    )
+    embed.add_field(name="Total Pull Requests", value=str(total_prs), inline=False)
+    return embed
+
+
+def format_repo_merge_stats(repo_name: str, repo_url: str, total_merges: int) -> discord.Embed:
+    """Format repository merge statistics."""
+    embed = discord.Embed(
+        title=f"📊 {repo_name} Merges",
+        url=repo_url,
+        color=discord.Color.blue(),
+    )
+    embed.add_field(name="Total Merges", value=str(total_merges), inline=False)
+    return embed

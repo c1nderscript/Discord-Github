@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     channel_gollum: int = 1392213582963540028
     channel_bot_logs: int = 1392213610167664670
 
+    # Aggregate statistics channels
+    channel_total_commits: int = 1392467209162592266
+    channel_total_pull_requests: int = 1392467228624158730
+    channel_total_merges: int = 1392467252711919666
+
     # Message retention configuration
     message_retention_days: int = 30
     
