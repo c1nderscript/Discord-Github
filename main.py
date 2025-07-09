@@ -32,6 +32,12 @@ setup_logging()
 # Initialize FastAPI app
 app = FastAPI()
 
+
+@app.get("/health")
+async def health() -> dict:
+    """Health check endpoint."""
+    return {"status": "ok"}
+
 # Logger
 logger = logging.getLogger("uvicorn")
 
