@@ -1,10 +1,13 @@
 import asyncio
+import os
+import sys
 import tempfile
 from pathlib import Path
-import unittest
 from unittest.mock import AsyncMock, patch
+import unittest
 
-import os
+# Ensure project root is on the path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
