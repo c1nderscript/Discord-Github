@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     channel_ci_builds: int = 1392457950169268334
     channel_gollum: int = 1392213582963540028
     channel_bot_logs: int = 1392213610167664670
+    channel_commits_overview: int = 1392467209162592266
+    channel_pull_requests_overview: int = 1392467228624158730
+    channel_merges_overview: int = 1392467252711919666
 
     # Message retention configuration
     message_retention_days: int = 30
