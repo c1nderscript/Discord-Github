@@ -9,8 +9,6 @@ from logging_config import setup_logging
 from config import settings
 from discord_bot import send_to_discord, discord_bot_instance
 
-from cleanup import cleanup_pr_messages
-
 from cleanup_pr_messages import cleanup_pr_messages
 
 from pr_map import load_pr_map, save_pr_map
