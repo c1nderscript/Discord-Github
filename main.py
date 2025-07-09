@@ -7,6 +7,11 @@ from fastapi.responses import JSONResponse
 
 from config import settings
 from discord_bot import send_to_discord, discord_bot_instance
+
+from cleanup import cleanup_pr_messages
+
+from cleanup_pr_messages import cleanup_pr_messages
+
 from pr_map import load_pr_map, save_pr_map
 from github_utils import verify_github_signature, is_github_event_relevant
 from formatters import (
@@ -34,6 +39,7 @@ async def startup_event():
     """Startup event to initialize Discord bot."""
     logger.info("Starting up Discord bot...")
     asyncio.create_task(discord_bot_instance.start())
+    asyncio.create_task(cleanup_pr_messages())
 
 
 @app.post("/github")
