@@ -5,6 +5,9 @@ import unittest
 from unittest.mock import AsyncMock, patch, MagicMock
 
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
