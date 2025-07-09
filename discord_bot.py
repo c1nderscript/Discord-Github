@@ -99,6 +99,23 @@ class DiscordBot:
             except Exception:
                 pass
 
+    async def update_channel_name(self, channel_id: int, new_name: str) -> bool:
+        """Update the name of a Discord channel."""
+        if not self.ready:
+            await self.bot.wait_until_ready()
+
+        try:
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                logger.error(f"Channel {channel_id} not found for rename")
+                return False
+
+            await channel.edit(name=new_name)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to rename channel {channel_id}: {e}")
+            return False
+
     async def send_to_webhook(self, url: str, content: str = None, embed: discord.Embed = None):
         """Send a message to a Discord webhook URL."""
         import aiohttp
