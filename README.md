@@ -68,6 +68,14 @@ Once the pull request is closed (merged or not), the stored message is automatic
 The JSON file maps `repo_name#pr_number` to the associated Discord message ID and is created at runtime in the project root.
 
 
+The utility script `cleanup_pr_messages.py` can remove stale entries if events were missed. It loads `pr_message_map.json`, checks each pull request's state via the GitHub API, deletes the corresponding Discord message when the PR is closed or merged, and updates the file.
+This cleanup runs automatically on bot startup but can also be invoked manually:
+
+```bash
+python cleanup_pr_messages.py
+```
+
+
 The helper function `cleanup_pr_messages` checks this file on startup. It uses the GitHub API
 to determine if the referenced pull requests are already closed and, if so, deletes the
 corresponding messages from Discord before removing the entries from the JSON map. This
