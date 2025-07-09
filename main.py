@@ -11,8 +11,6 @@ from discord_bot import send_to_discord, discord_bot_instance
 
 from cleanup import cleanup_pr_messages
 
-from cleanup_pr_messages import cleanup_pr_messages
-
 from pr_map import load_pr_map, save_pr_map
 from github_utils import verify_github_signature, is_github_event_relevant
 from formatters import (
@@ -23,6 +21,10 @@ from formatters import (
     format_release_event,
     format_deployment_event,
     format_gollum_event,
+    format_workflow_run,
+    format_workflow_job,
+    format_check_run,
+    format_check_suite,
     format_generic_event
 )
 
@@ -35,11 +37,17 @@ app = FastAPI()
 
 
 @app.get("/health")
+
 async def health_check() -> JSONResponse:
     """Return service health status."""
     if discord_bot_instance.ready:
         return JSONResponse(content={"status": "ok"})
     return JSONResponse(status_code=503, content={"status": "starting"})
+
+async def health() -> JSONResponse:
+    """Health check endpoint."""
+    return JSONResponse(content={"status": "ok"})
+
 
 # Logger
 logger = logging.getLogger("uvicorn")
@@ -141,6 +149,18 @@ async def route_github_event(event_type: str, payload: dict):
     elif event_type == "deployment_status":
         embed = format_deployment_event(payload)
         await send_to_discord(settings.channel_deployment_status, embed=embed)
+    elif event_type == "workflow_run":
+        embed = format_workflow_run(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
+    elif event_type == "workflow_job":
+        embed = format_workflow_job(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
+    elif event_type == "check_run":
+        embed = format_check_run(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
+    elif event_type == "check_suite":
+        embed = format_check_suite(payload)
+        await send_to_discord(settings.channel_ci_builds, embed=embed)
     elif event_type == "gollum":
         embed = format_gollum_event(payload)
         await send_to_discord(settings.channel_gollum, embed=embed)

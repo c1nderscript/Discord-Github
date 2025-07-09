@@ -52,6 +52,11 @@ The repository includes a GitHub Actions workflow that automatically runs the we
    python run.py
    ```
 
+## Available Routes
+
+- `POST /github` – receive GitHub webhook events.
+- `GET /health` – simple health check returning `{"status": "ok"}`.
+
 ### Environment Variables
 
 Set `DISCORD_WEBHOOK_URL` in your `.env` file to the Discord webhook you want to

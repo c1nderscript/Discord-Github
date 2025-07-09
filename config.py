@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     channel_issues: int = 1392213509382737991
     channel_releases: int = 1392213528542445628
     channel_deployment_status: int = 1392213551665381486
+    channel_ci_builds: int = 1392457950169268334
     channel_gollum: int = 1392213582963540028
     channel_bot_logs: int = 1392213610167664670
 
