@@ -70,6 +70,37 @@ When a pull request is opened or marked ready for review, the bot records the Di
 Once the pull request is closed (merged or not), the stored message is automatically deleted from the `#pull-requests` channel.
 The JSON file maps `repo_name#pr_number` to the associated Discord message ID and is created at runtime in the project root.
 
+
 ## Message Retention
 
 Old messages can clutter channels. The bot automatically removes messages older than `MESSAGE_RETENTION_DAYS` from the commits, pull requests and releases channels during startup. Set this environment variable to control the retention period (default is 30 days).
+
+
+The utility script `cleanup_pr_messages.py` can remove stale entries if events were missed. It loads `pr_message_map.json`, checks each pull request's state via the GitHub API, deletes the corresponding Discord message when the PR is closed or merged, and updates the file.
+This cleanup runs automatically on bot startup but can also be invoked manually:
+
+```bash
+python cleanup_pr_messages.py
+```
+
+
+The helper function `cleanup_pr_messages` checks this file on startup. It uses the GitHub API
+to determine if the referenced pull requests are already closed and, if so, deletes the
+corresponding messages from Discord before removing the entries from the JSON map. This
+self-healing step ensures stale PR notifications are removed even if the bot was offline
+when the pull request closed. The cleanup routine requires a valid `GITHUB_TOKEN` so the bot
+can query pull request status.
+
+
+## Retroactive PR Cleanup
+
+If the bot missed deleting pull request messages (for example, it was offline when a PR was closed), you can remove outdated messages manually:
+
+```bash
+python pr_cleanup_tool.py
+```
+
+This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
+
+
+
