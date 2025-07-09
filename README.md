@@ -60,3 +60,9 @@ use for sending messages. For example:
 ```ini
 DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_webhook_token/github
 ```
+
+## Pull Request Message Cleanup
+
+When a pull request is opened or marked ready for review, the bot records the Discord message ID in `pr_message_map.json`.
+Once the pull request is closed (merged or not), the stored message is automatically deleted from the `#pull-requests` channel.
+The JSON file maps `repo_name#pr_number` to the associated Discord message ID and is created at runtime in the project root.

@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from config import settings
 from discord_bot import send_to_discord, discord_bot_instance
+from pr_map import load_pr_map, save_pr_map
 from github_utils import verify_github_signature, is_github_event_relevant
 from formatters import (
     format_push_event,
@@ -72,10 +73,33 @@ async def route_github_event(event_type: str, payload: dict):
         action = payload.get("action")
         pr = payload.get("pull_request", {})
         is_merged = pr.get("merged", False)
-        
-        if action == "closed" and is_merged:
-            embed = format_merge_event(payload)
-            await send_to_discord(settings.channel_code_merges, embed=embed)
+        repo = payload.get("repository", {})
+        repo_name = repo.get("full_name", "")
+        number = pr.get("number")
+        pr_key = f"{repo_name}#{number}"
+
+        if action in ("opened", "ready_for_review"):
+            embed = format_pull_request_event(payload)
+            message = await send_to_discord(settings.channel_pull_requests, embed=embed)
+            if message:
+                pr_map = load_pr_map()
+                pr_map[pr_key] = message.id
+                save_pr_map(pr_map)
+        elif action == "closed":
+            if is_merged:
+                embed = format_merge_event(payload)
+                await send_to_discord(settings.channel_code_merges, embed=embed)
+            else:
+                embed = format_pull_request_event(payload)
+                await send_to_discord(settings.channel_pull_requests, embed=embed)
+
+            pr_map = load_pr_map()
+            message_id = pr_map.pop(pr_key, None)
+            if message_id:
+                await discord_bot_instance.delete_message_from_channel(
+                    settings.channel_pull_requests, message_id
+                )
+                save_pr_map(pr_map)
         else:
             embed = format_pull_request_event(payload)
             await send_to_discord(settings.channel_pull_requests, embed=embed)
