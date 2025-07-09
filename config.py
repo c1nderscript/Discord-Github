@@ -7,21 +7,21 @@ from agents_config import AGENT_METADATA, LOGS_DIR, STATE_DIR
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
-    
+
     # Discord Bot Configuration
     discord_bot_token: str
     discord_webhook_url: Optional[str] = None
-    
+
     # GitHub Webhook Configuration
     github_webhook_secret: Optional[str] = None
     github_token: Optional[str] = None
     github_username: Optional[str] = None
     webhook_url: Optional[str] = None
-    
+
     # Server Configuration
     host: str = "0.0.0.0"
     port: int = 8000
-    
+
     # Discord Channel IDs
     channel_commits: int = 1392213436720615504
     channel_pull_requests: int = 1392485974398861354
@@ -35,12 +35,12 @@ class Settings(BaseSettings):
 
     # Message retention configuration
     message_retention_days: int = 30
-    
+
     # Agent compliance paths
     logs_directory: str = str(LOGS_DIR)
     state_directory: str = str(STATE_DIR)
     agent_metadata: dict = AGENT_METADATA
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

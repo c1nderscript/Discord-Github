@@ -12,12 +12,9 @@ from pull_request_handler import handle_pull_request_event_with_retry
 
 from cleanup import cleanup_pr_messages
 
-from pr_map import load_pr_map, save_pr_map
 from github_utils import verify_github_signature, is_github_event_relevant
 from formatters import (
     format_push_event,
-    format_pull_request_event,
-    format_merge_event,
     format_issue_event,
     format_release_event,
     format_deployment_event,
@@ -26,7 +23,7 @@ from formatters import (
     format_workflow_job,
     format_check_run,
     format_check_suite,
-    format_generic_event
+    format_generic_event,
 )
 
 # Setup logging
@@ -35,11 +32,6 @@ setup_logging()
 # Initialize FastAPI app
 app = FastAPI()
 
-
-@app.get("/health")
-async def health() -> dict:
-    """Health check endpoint."""
-    return {"status": "ok"}
 
 # Logger
 logger = logging.getLogger("uvicorn")
@@ -76,7 +68,7 @@ async def github_webhook(request: Request):
     """GitHub webhook endpoint."""
     # Get the raw body for signature verification
     body = await request.body()
-    
+
     # Verify signature
     await verify_github_signature(request, body)
 
@@ -95,7 +87,7 @@ async def github_webhook(request: Request):
 
     # Route event to the appropriate handler
     await route_github_event(event_type, payload)
-    
+
     return JSONResponse(content={"status": "success"})
 
 
@@ -108,9 +100,9 @@ async def route_github_event(event_type: str, payload: dict):
         # Use enhanced PR handler with retry logic
         success = await handle_pull_request_event_with_retry(payload)
         if success:
-            logger.info(f"Successfully processed pull_request event")
+            logger.info("Successfully processed pull_request event")
         else:
-            logger.error(f"Failed to process pull_request event")
+            logger.error("Failed to process pull_request event")
     elif event_type == "issues":
         embed = format_issue_event(payload)
         await send_to_discord(settings.channel_issues, embed=embed)
@@ -138,5 +130,5 @@ async def route_github_event(event_type: str, payload: dict):
     else:
         embed = format_generic_event(event_type, payload)
         await send_to_discord(settings.channel_bot_logs, embed=embed)
-    
+
     logger.info(f"Event {event_type} routed successfully.")
