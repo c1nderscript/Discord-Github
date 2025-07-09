@@ -78,7 +78,7 @@ def get_status_color(status: str, conclusion: Optional[str] = None) -> discord.C
     if conclusion:
         if conclusion == "success":
             return discord.Color.green()
-        elif conclusion in ["failure", "cancelled"]:
+        elif conclusion == "failure":
             return discord.Color.red()
         elif conclusion == "cancelled":
             return discord.Color.light_grey()
