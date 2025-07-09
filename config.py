@@ -1,6 +1,7 @@
 """Configuration settings for the GitHub-Discord bot."""
 
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import Optional
 from agents_config import AGENT_METADATA, LOGS_DIR, STATE_DIR
 
@@ -41,9 +42,7 @@ class Settings(BaseSettings):
     state_directory: str = str(STATE_DIR)
     agent_metadata: dict = AGENT_METADATA
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
 # Global settings instance
