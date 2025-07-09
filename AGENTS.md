@@ -77,16 +77,22 @@
    The bot routes GitHub events to specific Discord channels based on event type and context:
 
    ```python
-   CHANNEL_MAP = {
-       "push": settings.channel_commits,                    # 1392213436720615504
-       "pull_request": handle_pr_routing,                   # Special handler
-       "issues": settings.channel_issues,                   # 1392213509382737991
-       "release": settings.channel_releases,                # 1392213528542445628
-       "deployment_status": settings.channel_deployment_status, # 1392213551665381486
-       "gollum": settings.channel_gollum,                   # 1392213582963540028
-       "default": settings.channel_bot_logs                 # 1392213610167664670
-   }
-   ```
+    CHANNEL_MAP = {
+        "push": settings.channel_commits,                    # 1392213436720615504
+        "pull_request": handle_pr_routing,                   # Special handler
+        "issues": settings.channel_issues,                   # 1392213509382737991
+        "release": settings.channel_releases,                # 1392213528542445628
+        "deployment_status": settings.channel_deployment_status, # 1392213551665381486
+        "gollum": settings.channel_gollum,                   # 1392213582963540028
+        "default": settings.channel_bot_logs                 # 1392213610167664670
+    }
+    ```
+
+Additional overview channels aggregate daily summaries and reports:
+
+- `settings.channel_commits_overview` – 1392467209162592266
+- `settings.channel_pull_requests_overview` – 1392467228624158730
+- `settings.channel_merges_overview` – 1392467252711919666
 
    ### Special Routing Logic
 
