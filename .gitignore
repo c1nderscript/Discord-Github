@@ -8,3 +8,4 @@ env/
 
 # Environment files
 .env
+*.log
