@@ -66,3 +66,10 @@ DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_web
 When a pull request is opened or marked ready for review, the bot records the Discord message ID in `pr_message_map.json`.
 Once the pull request is closed (merged or not), the stored message is automatically deleted from the `#pull-requests` channel.
 The JSON file maps `repo_name#pr_number` to the associated Discord message ID and is created at runtime in the project root.
+
+The helper function `cleanup_pr_messages` checks this file on startup. It uses the GitHub API
+to determine if the referenced pull requests are already closed and, if so, deletes the
+corresponding messages from Discord before removing the entries from the JSON map. This
+self-healing step ensures stale PR notifications are removed even if the bot was offline
+when the pull request closed. The cleanup routine requires a valid `GITHUB_TOKEN` so the bot
+can query pull request status.
