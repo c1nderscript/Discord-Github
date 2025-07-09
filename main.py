@@ -29,8 +29,17 @@ from formatters import (
 # Setup logging
 setup_logging()
 
+
 # Initialize FastAPI app
 app = FastAPI()
+
+
+@app.get("/health")
+async def health_check() -> JSONResponse:
+    """Return service health status."""
+    if discord_bot_instance.ready:
+        return JSONResponse(content={"status": "ok"})
+    return JSONResponse(status_code=503, content={"status": "starting"})
 
 # Logger
 logger = logging.getLogger("uvicorn")
