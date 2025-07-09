@@ -1,4 +1,4 @@
-"""Main server endpoint for receiving GitHub webhooks."""
+"""Main server endpoint for receiving GitHub webhooks with enhanced PR handling."""
 
 import logging
 import asyncio
@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from logging_config import setup_logging
 from config import settings
 from discord_bot import send_to_discord, discord_bot_instance
+from pull_request_handler import handle_pull_request_event_with_retry
 
 from cleanup import cleanup_pr_messages
 
@@ -34,14 +35,14 @@ setup_logging()
 # Initialize FastAPI app
 app = FastAPI()
 
+# Logger
+logger = logging.getLogger("uvicorn")
+
 
 @app.get("/health")
 async def health() -> JSONResponse:
     """Health check endpoint."""
     return JSONResponse(content={"status": "ok"})
-
-# Logger
-logger = logging.getLogger("uvicorn")
 
 
 @app.on_event("startup")
@@ -98,39 +99,12 @@ async def route_github_event(event_type: str, payload: dict):
         embed = format_push_event(payload)
         await send_to_discord(settings.channel_commits, embed=embed)
     elif event_type == "pull_request":
-        action = payload.get("action")
-        pr = payload.get("pull_request", {})
-        is_merged = pr.get("merged", False)
-        repo = payload.get("repository", {})
-        repo_name = repo.get("full_name", "")
-        number = pr.get("number")
-        pr_key = f"{repo_name}#{number}"
-
-        if action in ("opened", "ready_for_review"):
-            embed = format_pull_request_event(payload)
-            message = await send_to_discord(settings.channel_pull_requests, embed=embed)
-            if message:
-                pr_map = load_pr_map()
-                pr_map[pr_key] = message.id
-                save_pr_map(pr_map)
-        elif action == "closed":
-            if is_merged:
-                embed = format_merge_event(payload)
-                await send_to_discord(settings.channel_code_merges, embed=embed)
-            else:
-                embed = format_pull_request_event(payload)
-                await send_to_discord(settings.channel_pull_requests, embed=embed)
-
-            pr_map = load_pr_map()
-            message_id = pr_map.pop(pr_key, None)
-            if message_id:
-                await discord_bot_instance.delete_message_from_channel(
-                    settings.channel_pull_requests, message_id
-                )
-                save_pr_map(pr_map)
+        # Use enhanced PR handler with retry logic
+        success = await handle_pull_request_event_with_retry(payload)
+        if success:
+            logger.info(f"Successfully processed pull_request event")
         else:
-            embed = format_pull_request_event(payload)
-            await send_to_discord(settings.channel_pull_requests, embed=embed)
+            logger.error(f"Failed to process pull_request event")
     elif event_type == "issues":
         embed = format_issue_event(payload)
         await send_to_discord(settings.channel_issues, embed=embed)
