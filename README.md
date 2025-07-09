@@ -75,6 +75,7 @@ self-healing step ensures stale PR notifications are removed even if the bot was
 when the pull request closed. The cleanup routine requires a valid `GITHUB_TOKEN` so the bot
 can query pull request status.
 
+
 ## Retroactive PR Cleanup
 
 If the bot missed deleting pull request messages (for example, it was offline when a PR was closed), you can remove outdated messages manually:
@@ -84,4 +85,5 @@ python pr_cleanup_tool.py
 ```
 
 This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
+
 
