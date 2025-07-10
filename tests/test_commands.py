@@ -2,15 +2,10 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch, call
-import unittest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import unittest
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
@@ -82,8 +77,7 @@ class TestBotCommands(unittest.TestCase):
         mock_load.assert_called_once()
         mock_save.assert_called_once()
         self.ctx.send.assert_awaited()
-=======
-class TestUpdateCommand(unittest.TestCase):
+
     def test_update_sends_embeds_for_prs(self):
         prs = {
             "user/repo1": [
