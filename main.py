@@ -1,35 +1,19 @@
-"""Main server endpoint for receiving GitHub webhooks with enhanced PR handling."""
-
-import logging
 import asyncio
+import logging
+from typing import Dict
+
 import discord
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from logging_config import setup_logging
 from config import settings
-import discord
 from discord_bot import send_to_discord, discord_bot_instance
 from pull_request_handler import handle_pull_request_event_with_retry
-
 from cleanup import cleanup_pr_messages
-
-
-from pr_map import load_pr_map, save_pr_map
-from github_utils import (
-    verify_github_signature,
-    is_github_event_relevant,
-    gather_repo_stats,
-
-    RepoStats,
-)
-
-)
-
-from github_utils import verify_github_signature, is_github_event_relevant
 from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
-
+from github_utils import verify_github_signature, is_github_event_relevant, gather_repo_stats, RepoStats
 from formatters import (
     format_push_event,
     format_issue_event,
@@ -43,45 +27,39 @@ from formatters import (
     format_generic_event,
 )
 
-# Setup logging
 setup_logging()
+logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
 app = FastAPI()
-
-
-# Logger
-logger = logging.getLogger("uvicorn")
 
 
 @app.get("/health")
 async def health() -> JSONResponse:
-    """Health check endpoint."""
     return JSONResponse(content={"status": "ok"})
 
 
 async def update_github_stats() -> None:
-    """Update Discord overview channels with GitHub statistics."""
     try:
         stats = await fetch_repo_stats()
-    except Exception as exc:
-        logger.error(f"Failed to fetch repo stats: {exc}")
+    except Exception as exc:  # pragma: no cover - network errors
+        logger.error("Failed to fetch repo stats: %s", exc)
         return
 
     totals = {"commits": 0, "pull_requests": 0, "merges": 0}
-    for counts in stats.values():
-        for key in totals:
-            totals[key] += counts.get(key, 0)
+    for repo in stats:
+        totals["commits"] += repo["commits"]
+        totals["pull_requests"] += repo["pull_requests"]
+        totals["merges"] += repo["merged_pull_requests"]
 
-    embeds = {}
+    embeds: Dict[str, discord.Embed] = {}
     for key, title in [
         ("commits", "Commit Counts"),
         ("pull_requests", "Pull Request Counts"),
         ("merges", "Merge Counts"),
     ]:
         embed = discord.Embed(title=title, color=discord.Color.blue())
-        for repo, counts in stats.items():
-            embed.add_field(name=repo, value=str(counts.get(key, 0)), inline=False)
+        for repo in stats:
+            embed.add_field(name=repo["name"], value=str(repo[key if key != "merges" else "merged_pull_requests"]), inline=False)
         embeds[key] = embed
 
     channel_map = {
@@ -92,10 +70,7 @@ async def update_github_stats() -> None:
 
     message_map = load_stats_map()
     for key, channel_id in channel_map.items():
-        await discord_bot_instance.update_channel_name(
-            channel_id, f"{totals[key]}-{key.replace('_', '-')}"
-        )
-
+        await discord_bot_instance.update_channel_name(channel_id, f"{totals[key]}-{key.replace('_', '-')}")
         embed = embeds[key]
         message_id = message_map.get(key)
         channel = discord_bot_instance.bot.get_channel(channel_id)
@@ -104,22 +79,17 @@ async def update_github_stats() -> None:
                 message = await channel.fetch_message(message_id)
                 await message.edit(embed=embed)
                 continue
-            except Exception as exc:
-                logger.warning(
-                    f"Failed to edit stats message in {channel_id}: {exc}"
-                )
-
+            except Exception:
+                pass
         msg = await send_to_discord(channel_id, embed=embed)
         if msg:
             message_map[key] = msg.id
-
     save_stats_map(message_map)
 
 
 @app.on_event("startup")
-async def startup_event():
-    """Startup event to initialize Discord bot."""
-    logger.info("Starting up Discord bot...")
+async def startup_event() -> None:
+    logger.info("Starting Discord bot...")
     asyncio.create_task(discord_bot_instance.start())
     asyncio.create_task(cleanup_pr_messages())
     asyncio.create_task(update_github_stats())
@@ -130,62 +100,37 @@ async def startup_event():
         settings.channel_releases,
     ]
     for channel_id in purge_channels:
-        asyncio.create_task(
-            discord_bot_instance.purge_old_messages(
-                channel_id, settings.message_retention_days
-            )
-        )
+        asyncio.create_task(discord_bot_instance.purge_old_messages(channel_id, settings.message_retention_days))
 
     asyncio.create_task(update_statistics())
 
 
 @app.post("/github")
 async def github_webhook(request: Request):
-    """GitHub webhook endpoint."""
-    # Get the raw body for signature verification
     body = await request.body()
-
-    # Verify signature
     await verify_github_signature(request, body)
 
-    # Parse event type and payload
     event_type = request.headers.get("X-GitHub-Event")
     if not event_type:
         raise HTTPException(status_code=400, detail="Missing X-GitHub-Event header")
 
     payload = await request.json()
-    logger.info(f"Received event: {event_type}")
-
-    # Check if the event is relevant
     if not is_github_event_relevant(event_type, payload):
-        logger.info(f"Skipping irrelevant event: {event_type}")
         return JSONResponse(content={"status": "skipped"})
 
-    # Route event to the appropriate handler
     await route_github_event(event_type, payload)
-
     return JSONResponse(content={"status": "success"})
 
 
-async def route_github_event(event_type: str, payload: dict):
-    """Route GitHub event to appropriate Discord channel."""
+async def route_github_event(event_type: str, payload: dict) -> None:
     if event_type == "push":
         embed = format_push_event(payload)
         await send_to_discord(settings.channel_commits, embed=embed)
         asyncio.create_task(update_github_stats())
     elif event_type == "pull_request":
-        # Use enhanced PR handler with retry logic
         success = await handle_pull_request_event_with_retry(payload)
-        if success:
-
-            logger.info(f"Successfully processed pull_request event")
-
-            logger.info("Successfully processed pull_request event")
-
-            if payload.get("action") in {"opened", "closed", "reopened"}:
-                asyncio.create_task(update_github_stats())
-        else:
-            logger.error("Failed to process pull_request event")
+        if success and payload.get("action") in {"opened", "closed", "reopened"}:
+            asyncio.create_task(update_github_stats())
     elif event_type == "issues":
         embed = format_issue_event(payload)
         await send_to_discord(settings.channel_issues, embed=embed)
@@ -214,67 +159,29 @@ async def route_github_event(event_type: str, payload: dict):
         embed = format_generic_event(event_type, payload)
         await send_to_discord(settings.channel_bot_logs, embed=embed)
 
-    logger.info(f"Event {event_type} routed successfully.")
-
 
 async def update_statistics() -> None:
-
-    """Update channel names with repo statistics and post summary embeds."""
     if not settings.github_token:
         logger.warning("No GITHUB_TOKEN configured; skipping statistics update")
         return
 
-    try:
-        stats = await gather_repo_stats()
-    except Exception as exc:
-        logger.error(f"Failed to gather repo stats: {exc}")
-        return
-
-    total_commits = sum(s.commits for s in stats)
-    total_prs = sum(s.pull_requests for s in stats)
-    total_merges = sum(s.merges for s in stats)
-
-    """Update channel names and send repository statistics embeds."""
-    while not discord_bot_instance.ready:
-        await asyncio.sleep(1)
-
     stats = await gather_repo_stats()
-
     total_commits = sum(r.commit_count for r in stats)
     total_prs = sum(r.pr_count for r in stats)
     total_merges = sum(r.merge_count for r in stats)
 
+    while not discord_bot_instance.ready:
+        await asyncio.sleep(1)
 
-    await discord_bot_instance.update_channel_name(
-        settings.channel_commits, f"{total_commits}-commits"
-    )
-    await discord_bot_instance.update_channel_name(
-        settings.channel_pull_requests, f"{total_prs}-pull-requests"
-    )
-    await discord_bot_instance.update_channel_name(
-        settings.channel_code_merges, f"{total_merges}-merges"
-    )
+    await discord_bot_instance.update_channel_name(settings.channel_commits, f"{total_commits}-commits")
+    await discord_bot_instance.update_channel_name(settings.channel_pull_requests, f"{total_prs}-pull-requests")
+    await discord_bot_instance.update_channel_name(settings.channel_code_merges, f"{total_merges}-merges")
 
     for repo in stats:
-        embed = discord.Embed(
-
-            title=repo.name,
-            color=discord.Color.blue(),
-        )
-        embed.add_field(name="Commits", value=str(repo.commits), inline=True)
-        embed.add_field(
-            name="Pull Requests", value=str(repo.pull_requests), inline=True
-        )
-        embed.add_field(name="Merges", value=str(repo.merges), inline=True)
-
-            title=f"📊 Statistics for {repo.name}",
-            color=discord.Color.blue(),
-        )
+        embed = discord.Embed(title=f"📊 Statistics for {repo.name}", color=discord.Color.blue())
         embed.add_field(name="Commits", value=str(repo.commit_count), inline=True)
         embed.add_field(name="Pull Requests", value=str(repo.pr_count), inline=True)
         embed.add_field(name="Merges", value=str(repo.merge_count), inline=True)
-
-
         await send_to_discord(settings.channel_commits, embed=embed)
         await send_to_discord(settings.channel_pull_requests, embed=embed)
         await send_to_discord(settings.channel_code_merges, embed=embed)

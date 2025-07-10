@@ -1,11 +1,10 @@
 import asyncio
-import tempfile
-from pathlib import Path
-import unittest
-from unittest.mock import AsyncMock, patch, MagicMock
-
 import os
 import sys
+import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, patch, MagicMock
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -13,12 +12,11 @@ os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
 import pr_map
 import main
-import pull_request_handler
 from config import settings
 
 
 class TestPRMessageCleanup(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.tmpdir = tempfile.TemporaryDirectory()
         self.pr_file = Path(self.tmpdir.name) / "map.json"
         patcher = patch.object(pr_map, "PR_MAP_FILE", self.pr_file)
@@ -31,55 +29,28 @@ class TestPRMessageCleanup(unittest.TestCase):
         message.id = 123
         payload = {
             "action": "opened",
-            "pull_request": {
-                "number": 1,
-                "title": "Add feature",
-                "html_url": "http://example.com/pr/1",
-                "user": {"login": "alice"},
-            },
+            "pull_request": {"number": 1, "title": "Add", "html_url": "x", "user": {"login": "a"}},
             "repository": {"full_name": "test/repo"},
         }
-
-        with patch("pull_request_handler.send_to_discord", new_callable=AsyncMock, return_value=message):
-
-        with patch(
-            "main.send_to_discord", new_callable=AsyncMock, return_value=message
-        ):
-
+        with patch("main.send_to_discord", new_callable=AsyncMock, return_value=message), \
+             patch("main.update_github_stats", new_callable=AsyncMock):
             asyncio.run(main.route_github_event("pull_request", payload))
         data = pr_map.load_pr_map()
-        self.assertEqual(data.get("test/repo#1"), 123)
+        self.assertEqual(data.get("test/repo#1"), message.id)
 
     def test_delete_message_on_close(self):
         pr_map.save_pr_map({"test/repo#1": 456})
         payload = {
             "action": "closed",
-            "pull_request": {
-                "number": 1,
-                "title": "Add feature",
-                "html_url": "http://example.com/pr/1",
-                "user": {"login": "alice"},
-                "merged": True,
-                "merged_by": {"login": "bob"},
-            },
+            "pull_request": {"number": 1, "merged": True},
             "repository": {"full_name": "test/repo"},
         }
-
-        with patch("pull_request_handler.send_to_discord", new_callable=AsyncMock) as mock_send, \
-             patch(
-                 "discord_bot.discord_bot_instance.delete_message_from_channel",
-                 new_callable=AsyncMock,
-             ) as mock_delete:
-
-        with patch("main.send_to_discord", new_callable=AsyncMock), patch(
-            "discord_bot.discord_bot_instance.delete_message_from_channel",
-            new_callable=AsyncMock,
-        ) as mock_delete:
-
+        with patch("main.update_github_stats", new_callable=AsyncMock), \
+             patch("discord_bot.discord_bot_instance.delete_message_from_channel", new_callable=AsyncMock) as mock_del, \
+             patch("main.send_to_discord", new_callable=AsyncMock):
             asyncio.run(main.route_github_event("pull_request", payload))
-            mock_delete.assert_awaited_with(settings.channel_pull_requests, 456)
-        data = pr_map.load_pr_map()
-        self.assertEqual(data, {})
+            mock_del.assert_awaited_with(settings.channel_pull_requests, 456)
+        self.assertEqual(pr_map.load_pr_map(), {})
 
 
 if __name__ == "__main__":

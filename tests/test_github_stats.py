@@ -25,10 +25,10 @@ class TestGithubStats(unittest.TestCase):
         self.addCleanup(self.tmpdir.cleanup)
 
     def test_update_github_stats(self):
-        sample_stats = {
-            "repo1": {"commits": 5, "pull_requests": 2, "merges": 1},
-            "repo2": {"commits": 3, "pull_requests": 1, "merges": 0},
-        }
+        sample_stats = [
+            {"name": "repo1", "commits": 5, "pull_requests": 2, "merged_pull_requests": 1},
+            {"name": "repo2", "commits": 3, "pull_requests": 1, "merged_pull_requests": 0},
+        ]
 
         message = MagicMock()
         message.id = 42

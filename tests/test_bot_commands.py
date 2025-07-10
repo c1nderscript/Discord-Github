@@ -51,7 +51,7 @@ class TestBotCommands(unittest.TestCase):
         message = MagicMock()
         message.id = 123
         sample_pr = {"number": 1, "title": "Test", "html_url": "url", "user": {"login": "bob"}}
-        with patch("github_api.fetch_open_pull_requests", new_callable=AsyncMock, return_value=[("repo/test", sample_pr)]), \
+        with patch("discord_bot.fetch_open_pull_requests", new_callable=AsyncMock, return_value=[("repo/test", sample_pr)]), \
              patch("discord_bot.send_to_discord", new_callable=AsyncMock, return_value=message) as mock_send:
             asyncio.run(update_pull_requests(ctx))
             mock_send.assert_awaited_once()

@@ -2,20 +2,17 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+import tempfile
 from unittest.mock import AsyncMock, MagicMock, patch, call
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import unittest
-from unittest.mock import AsyncMock, MagicMock, call, patch
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
 import discord_bot
 from config import settings
+import pr_map
 
 
 
@@ -37,21 +34,19 @@ class TestBotCommands(unittest.TestCase):
             "purge_old_messages",
             new_callable=AsyncMock,
         ) as mock_purge:
-            asyncio.run(discord_bot.clear(self.ctx))
+            asyncio.run(discord_bot.clear_channels(self.ctx))
 
         mock_purge.assert_has_awaits([call(ch, 0) for ch in channels], any_order=True)
         self.ctx.send.assert_awaited_once()
 
     def test_update_command(self):
         sample_prs = [
-            {
+            ("repo/test", {
                 "number": 1,
                 "title": "Test PR",
                 "html_url": "https://example.com/pr/1",
                 "user": {"login": "tester"},
-                "base": {"repo": {"full_name": "repo/test"}},
-                "repository_full_name": "repo/test",
-            }
+            })
         ]
         embed = MagicMock()
         message = MagicMock()
@@ -74,7 +69,7 @@ class TestBotCommands(unittest.TestCase):
         ) as mock_load, patch(
             "discord_bot.save_pr_map"
         ) as mock_save:
-            asyncio.run(discord_bot.update(self.ctx))
+            asyncio.run(discord_bot.update_pull_requests(self.ctx))
 
         mock_fetch.assert_awaited_once()
         mock_format.assert_called_once()
@@ -82,17 +77,12 @@ class TestBotCommands(unittest.TestCase):
         mock_load.assert_called_once()
         mock_save.assert_called_once()
         self.ctx.send.assert_awaited()
-=======
 class TestUpdateCommand(unittest.TestCase):
     def test_update_sends_embeds_for_prs(self):
-        prs = {
-            "user/repo1": [
-                {"number": 1, "title": "PR1", "html_url": "http://x/1", "user": {"login": "a"}}
-            ],
-            "user/repo2": [
-                {"number": 2, "title": "PR2", "html_url": "http://x/2", "user": {"login": "b"}}
-            ],
-        }
+        prs = [
+            ("user/repo1", {"number": 1, "title": "PR1", "html_url": "http://x/1", "user": {"login": "a"}}),
+            ("user/repo2", {"number": 2, "title": "PR2", "html_url": "http://x/2", "user": {"login": "b"}}),
+        ]
 
         embed1 = MagicMock()
         embed2 = MagicMock()
@@ -102,10 +92,13 @@ class TestUpdateCommand(unittest.TestCase):
         ) as mock_fetch, patch(
             "discord_bot.format_pull_request_event", side_effect=[embed1, embed2]
         ) as mock_fmt, patch(
-            "discord_bot.send_to_discord", new_callable=AsyncMock
-        ) as mock_send:
+            "discord_bot.send_to_discord", new_callable=AsyncMock, return_value=MagicMock(id=1)
+        ) as mock_send, patch.object(
+            pr_map, "PR_MAP_FILE", Path(tempfile.gettempdir()) / "map.json"
+        ):
             ctx = MagicMock()
-            asyncio.run(discord_bot.update.callback(ctx))
+            ctx.send = AsyncMock()
+            asyncio.run(discord_bot.update_pull_requests.callback(ctx))
 
         mock_fetch.assert_awaited_once()
         self.assertEqual(mock_fmt.call_count, 2)
