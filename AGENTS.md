@@ -389,6 +389,7 @@ Additional overview channels aggregate daily summaries and reports:
    6. **Type Safety**: Use type hints and Pydantic models for data validation
    7. **Test Coverage**: Write tests for all new routing logic and formatters
    8. **Security First**: Never expose tokens or sensitive data in logs or error messages
+   9. **Maintain setup.sh**: Keep the `setup.sh` script current. This script should install dependencies and configure environment variables so Codex agents can run tests and builds consistently. Update it whenever setup steps change.
 
    ### Common Development Patterns
 
@@ -430,3 +431,5 @@ Additional overview channels aggregate daily summaries and reports:
 
    ### 2025-07-09
    - Updated pull requests channel mapping to ID 1392485974398861354
+   ### 2025-07-10
+   - Added instruction for maintaining `setup.sh` as the Codex environment setup script
