@@ -11,8 +11,13 @@ os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 os.environ.setdefault("GITHUB_TOKEN", "token")
 
 import main
+
 from discord_bot import discord_bot_instance
 from config import settings
+
+from config import settings
+from discord_bot import discord_bot_instance
+
 from github_utils import RepoStats
 
 
@@ -28,11 +33,14 @@ class TestUpdateStatistics(unittest.TestCase):
             discord_bot_instance.ready = True
             asyncio.run(main.update_statistics())
 
-        mock_rename.assert_has_awaits([
-            call(settings.channel_commits, "8-commits"),
-            call(settings.channel_pull_requests, "6-pull-requests"),
-            call(settings.channel_code_merges, "3-merges"),
-        ], any_order=True)
+        mock_rename.assert_has_awaits(
+            [
+                call(settings.channel_commits, "8-commits"),
+                call(settings.channel_pull_requests, "6-pull-requests"),
+                call(settings.channel_code_merges, "3-merges"),
+            ],
+            any_order=True,
+        )
 
         # Verify embed content
         args, kwargs = mock_send.await_args_list[0]

@@ -29,6 +29,15 @@ See the [Channel mapping](docs/ChannelMapping.md) document for routing details.
    python run.py
    ```
 
+For a quicker start you can run the helper script:
+
+```bash
+./setup.sh
+```
+
+It installs all dependencies inside `.venv` and copies `.env.template` to `.env`
+if needed. See **AGENTS.md** for guidelines on keeping this script current.
+
 ### Environment Variables
 
 

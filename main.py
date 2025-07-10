@@ -174,8 +174,6 @@ async def route_github_event(event_type: str, payload: dict):
 
             logger.info(f"Successfully processed pull_request event")
 
-            logger.info("Successfully processed pull_request event")
-
             if payload.get("action") in {"opened", "closed", "reopened"}:
                 asyncio.create_task(update_github_stats())
         else:
