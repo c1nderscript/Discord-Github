@@ -1,0 +1,7 @@
+{
+  "categories": {
+    "Bot Operations": ["bot-logs", "bot-commands"],
+    "General": ["announcements", "general-chat"],
+    "Moderation": ["mod-logs", "reports"]
+  }
+}
