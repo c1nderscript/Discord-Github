@@ -4,13 +4,17 @@ After=network.target network-online.target
 Wants=network-online.target
 
 [Service]
+# Set DISCORD_GITHUB_HOME to the installation directory of the bot.
+# When deploying, update the path below or override the variable via an
+# EnvironmentFile.
+Environment=DISCORD_GITHUB_HOME=/opt/discord-github
 Type=simple
 User=cinder
 Group=cinder
-WorkingDirectory=/home/cinder/Documents/D_Projects/Discord-Github
-Environment=PATH=/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin
-EnvironmentFile=-/home/cinder/Documents/D_Projects/Discord-Github/.env
-ExecStart=/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin/python run.py
+WorkingDirectory=${DISCORD_GITHUB_HOME}
+Environment=PATH=${DISCORD_GITHUB_HOME}/.venv/bin
+EnvironmentFile=-${DISCORD_GITHUB_HOME}/.env
+ExecStart=${DISCORD_GITHUB_HOME}/.venv/bin/python run.py
 Restart=always
 RestartSec=10
 KillMode=mixed
@@ -18,7 +22,7 @@ KillSignal=SIGINT
 TimeoutStopSec=30
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/home/cinder/Documents/D_Projects/Discord-Github
+ReadWritePaths=${DISCORD_GITHUB_HOME}
 NoNewPrivileges=true
 StandardOutput=journal
 StandardError=journal
