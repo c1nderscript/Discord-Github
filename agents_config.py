@@ -3,8 +3,11 @@
 from pathlib import Path
 import os
 
-# AGENTS.MD compliant canonical directory
-AGENTS_CANONICAL_DIR = Path("/home/cinder/Documents/Agents")
+# AGENTS.MD compliant canonical directory. Use AGENTS_BASE_DIR env var if set
+# otherwise default to ~/Agents.
+AGENTS_CANONICAL_DIR = Path(
+    os.environ.get("AGENTS_BASE_DIR", str(Path.home() / "Agents"))
+).expanduser()
 
 # Subdirectories
 AGENTS_LOGS_DIR = AGENTS_CANONICAL_DIR / "logs"
@@ -22,7 +25,11 @@ def ensure_agents_directories():
         AGENTS_CONFIG_DIR,
         AGENTS_SHARED_DIR,
     ]:
-        directory.mkdir(parents=True, exist_ok=True)
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            # Skip if we can't create the directory
+            continue
 
         # Set permissions to allow deploy user to write
         try:

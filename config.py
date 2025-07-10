@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     message_retention_days: int = 30
 
     # Agent compliance paths
+    agents_base_dir: str = str(AGENTS_CANONICAL_DIR)
     logs_directory: str = str(LOGS_DIR)
     state_directory: str = str(STATE_DIR)
     agent_metadata: dict = AGENT_METADATA

@@ -3,15 +3,22 @@
 import logging
 import logging.handlers
 from pathlib import Path
+import os
 
-# Canonical directory for agent logs and state
-AGENTS_DIR = Path("/home/cinder/Documents/Agents")
+# Canonical directory for agent logs and state. Use AGENTS_BASE_DIR env var if
+# available, otherwise default to ~/Agents.
+AGENTS_DIR = Path(
+    os.environ.get("AGENTS_BASE_DIR", str(Path.home() / "Agents"))
+).expanduser()
 LOGS_DIR = AGENTS_DIR / "logs"
 STATE_DIR = AGENTS_DIR / "state"
 
-# Ensure directories exist
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
-STATE_DIR.mkdir(parents=True, exist_ok=True)
+# Ensure directories exist and ignore permission errors
+for _dir in (LOGS_DIR, STATE_DIR):
+    try:
+        _dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        continue
 
 
 def setup_logging():

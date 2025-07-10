@@ -69,6 +69,13 @@ DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_web
 You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
 If not set, messages older than 30 days are removed.
 
+Log and state files are stored under a canonical agents directory. By default this
+is `~/Agents`, but you can change it with `AGENTS_BASE_DIR`:
+
+```ini
+AGENTS_BASE_DIR=/path/to/custom/Agents
+```
+
 
 The bot posts messages to multiple Discord channels. Override their IDs in `.env` if your server uses different channels:
 
