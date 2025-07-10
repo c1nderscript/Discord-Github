@@ -149,6 +149,13 @@ To quickly remove **all** messages from the development channels, type:
 
 The command iterates over the configured development channels and purges every message, providing a clean slate for testing.
 
+## Continuous Integration
+
+Automated tests run with GitHub Actions. The workflow defined in
+`.github/workflows/ci.yml` installs Python 3.11, installs the project
+dependencies along with `pytest`, and executes the test suite with
+`pytest -q` for each push and pull request.
+
 ## Discord Bot Commands
 
 The bot provides a few convenience commands when interacting directly in Discord.
