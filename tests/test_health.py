@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
+os.environ.setdefault("AGENTS_DIR", "/tmp/agents")
 
 import main
 from discord_bot import discord_bot_instance

@@ -8,6 +8,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
+os.environ.setdefault("AGENTS_DIR", "/tmp/agents")
 
 import pr_map
 from discord_bot import clear_channels, update_pull_requests, discord_bot_instance

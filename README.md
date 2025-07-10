@@ -83,6 +83,7 @@ The bot posts messages to multiple Discord channels. Override their IDs in `.env
 - `CHANNEL_DEPLOYMENT_STATUS`
 - `CHANNEL_GOLLUM`
 - `CHANNEL_BOT_LOGS`
+- `AGENTS_DIR` – base directory for logs and state (default `/home/cinder/Documents/Agents`)
 
 The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
 

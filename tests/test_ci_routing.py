@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
+os.environ.setdefault("AGENTS_DIR", "/tmp/agents")
 
 import main
 from config import settings

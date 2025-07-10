@@ -9,6 +9,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
+os.environ.setdefault("AGENTS_DIR", "/tmp/agents")
 
 import pr_map
 import pull_request_handler

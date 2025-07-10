@@ -9,6 +9,7 @@ User=cinder
 Group=cinder
 WorkingDirectory=/home/cinder/Documents/D_Projects/Discord-Github
 Environment=PATH=/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin
+Environment=AGENTS_DIR=/home/cinder/Documents/Agents
 EnvironmentFile=-/home/cinder/Documents/D_Projects/Discord-Github/.env
 ExecStart=/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin/python run.py
 Restart=always
