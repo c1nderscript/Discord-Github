@@ -12,25 +12,27 @@ Environment variables required:
 - GITHUB_TOKEN: GitHub personal access token with repo permissions
 - GITHUB_WEBHOOK_SECRET: Secret for webhook verification
 - GITHUB_USERNAME: GitHub username (optional, defaults to authenticated user)
+- BOT_PUBLIC_URL: Base URL for the bot (optional, uses default)
 - WEBHOOK_URL: URL endpoint for the webhook (optional, uses default)
 """
 
-import json
 import os
 import requests
 import time
-from typing import List, Dict
+from typing import List
 
 # Try to load environment variables from .env file
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     print("⚠️  python-dotenv not installed. Install it with: pip install python-dotenv")
     print("Continuing with system environment variables...")
 
 # Configuration from environment variables
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "http://65.21.253.0:8000/github")
+BASE_URL = os.getenv("BOT_PUBLIC_URL", "http://65.21.253.0:8000")
+WEBHOOK_URL = f"{BASE_URL}/github"
 WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "c1nderscript")
@@ -46,52 +48,50 @@ if not WEBHOOK_SECRET:
     print("Please set it in your .env file or export it as an environment variable")
     exit(1)
 
+
 def get_all_repositories() -> List[str]:
     """
     Get all repositories for the user from GitHub API (including private ones).
     """
-    url = f"https://api.github.com/user/repos"  # Use /user/repos for authenticated user
-    
+    url = "https://api.github.com/user/repos"  # Use /user/repos for authenticated user
+
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
+        "Accept": "application/vnd.github.v3+json",
     }
-    
-    params = {
-        "per_page": 100,
-        "visibility": "all",
-        "affiliation": "owner"
-    }
-    
+
+    params = {"per_page": 100, "visibility": "all", "affiliation": "owner"}
+
     try:
         response = requests.get(url, headers=headers, params=params)
-        
+
         if response.status_code == 200:
             repos = response.json()
-            repo_names = [repo['name'] for repo in repos]
+            repo_names = [repo["name"] for repo in repos]
             print(f"Found {len(repo_names)} repositories")
             return repo_names
         else:
             print(f"Error fetching repositories: {response.status_code}")
             print(f"Response: {response.text}")
             return []
-            
+
     except Exception as e:
         print(f"Error fetching repositories: {str(e)}")
         return []
+
 
 def add_webhook_to_repo(repo_name: str) -> bool:
     """
     Add a webhook to a specific repository.
     """
     url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{repo_name}/hooks"
-    
+
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
-    
+
     webhook_data = {
         "name": "web",
         "active": True,
@@ -100,13 +100,13 @@ def add_webhook_to_repo(repo_name: str) -> bool:
             "url": WEBHOOK_URL,
             "content_type": "json",
             "secret": WEBHOOK_SECRET,
-            "insecure_ssl": "0"
-        }
+            "insecure_ssl": "0",
+        },
     }
-    
+
     try:
         response = requests.post(url, headers=headers, json=webhook_data)
-        
+
         if response.status_code == 201:
             print(f"✅ Successfully added webhook to {repo_name}")
             return True
@@ -118,10 +118,11 @@ def add_webhook_to_repo(repo_name: str) -> bool:
             print(f"❌ Failed to add webhook to {repo_name}: {response.status_code}")
             print(f"Response: {response.text}")
             return False
-            
+
     except Exception as e:
         print(f"❌ Error adding webhook to {repo_name}: {str(e)}")
         return False
+
 
 def main():
     """
@@ -129,19 +130,19 @@ def main():
     """
     print("🔍 Fetching all repositories...")
     repositories = get_all_repositories()
-    
+
     if not repositories:
         print("❌ No repositories found or error occurred")
         return
-    
+
     print(f"🚀 Adding GitHub webhooks to {len(repositories)} repositories...")
     print(f"📡 Webhook URL: {WEBHOOK_URL}")
     print("-" * 50)
-    
+
     success_count = 0
     failed_repos = []
     existing_webhooks = 0
-    
+
     for repo in repositories:
         result = add_webhook_to_repo(repo)
         if result:
@@ -152,21 +153,22 @@ def main():
                 existing_webhooks += 1
             else:
                 failed_repos.append(repo)
-        
+
         # Add a small delay to avoid rate limiting
         time.sleep(1)
-    
+
     print("-" * 50)
-    print(f"📊 Summary:")
+    print("📊 Summary:")
     print(f"✅ Successfully added: {success_count}")
     print(f"⚠️  Already existed: {existing_webhooks}")
     print(f"❌ Failed: {len(failed_repos)}")
     print(f"📦 Total repositories: {len(repositories)}")
-    
+
     if failed_repos:
         print(f"Failed repositories: {', '.join(failed_repos)}")
-    
+
     print("\n🎉 Webhook setup complete!")
+
 
 if __name__ == "__main__":
     main()
