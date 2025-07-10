@@ -2,10 +2,12 @@
 
 import logging
 import logging.handlers
+import os
 from pathlib import Path
 
 # Canonical directory for agent logs and state
-AGENTS_DIR = Path("/home/cinder/Documents/Agents")
+# Use environment variable to allow customization. Default to current directory.
+AGENTS_DIR = Path(os.getenv("AGENTS_DIR", Path.cwd()))
 LOGS_DIR = AGENTS_DIR / "logs"
 STATE_DIR = AGENTS_DIR / "state"
 

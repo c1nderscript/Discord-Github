@@ -31,8 +31,40 @@ See the [Channel mapping](docs/ChannelMapping.md) document for routing details.
 
 ### Environment Variables
 
+
+Set `DISCORD_WEBHOOK_URL` in your `.env` file to the Discord webhook you want to
+use for sending messages. For example:
+
+```ini
+DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_webhook_token/github
+```
+
+Set `AGENTS_DIR` to specify where logs and state files are stored. If not set, the
+current working directory is used.
+
+You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
+If not set, messages older than 30 days are removed.
+
+
+The bot posts messages to multiple Discord channels. Override their IDs in `.env` if your server uses different channels:
+
+- `CHANNEL_COMMITS`
+- `CHANNEL_COMMITS_OVERVIEW`
+- `CHANNEL_PULL_REQUESTS`
+- `CHANNEL_PULL_REQUESTS_OVERVIEW`
+- `CHANNEL_CODE_MERGES`
+- `CHANNEL_MERGES_OVERVIEW`
+- `CHANNEL_ISSUES`
+- `CHANNEL_RELEASES`
+- `CHANNEL_DEPLOYMENT_STATUS`
+- `CHANNEL_GOLLUM`
+- `CHANNEL_BOT_LOGS`
+
+The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
+
 Copy `.env.template` to `.env` and edit each section. The template groups
 variables for easier configuration. A shortened example is shown below:
+
 
 ```ini
 # Discord settings

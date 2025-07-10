@@ -4,7 +4,8 @@ from pathlib import Path
 import os
 
 # AGENTS.MD compliant canonical directory
-AGENTS_CANONICAL_DIR = Path("/home/cinder/Documents/Agents")
+# Configurable via the AGENTS_DIR environment variable, defaults to current directory
+AGENTS_CANONICAL_DIR = Path(os.getenv("AGENTS_DIR", Path.cwd()))
 
 # Subdirectories
 AGENTS_LOGS_DIR = AGENTS_CANONICAL_DIR / "logs"
