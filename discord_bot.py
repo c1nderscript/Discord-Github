@@ -152,6 +152,9 @@ class DiscordBot:
     async def update_channel_name(self, channel_id: int, new_name: str) -> bool:
 
         """Rename a Discord channel."""
+
+
+        """Rename a Discord channel."""
         if not self.ready:
             await self.bot.wait_until_ready()
         channel = self.bot.get_channel(channel_id)
@@ -165,6 +168,7 @@ class DiscordBot:
 
         """Rename a Discord channel."""
 
+
         if not self.ready:
             await self.bot.wait_until_ready()
 
@@ -174,6 +178,12 @@ class DiscordBot:
                 logger.error(f"Channel {channel_id} not found for rename")
                 return False
 
+            await channel.edit(name=new_name)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to rename channel {channel_id} to {new_name}: {e}")
+
+
 
 
             await channel.edit(name=new_name)
@@ -181,15 +191,21 @@ class DiscordBot:
         except Exception as e:
             logger.error(f"Failed to rename channel {channel_id}: {e}")
 
+
             try:
                 logs_channel = self.bot.get_channel(settings.channel_bot_logs)
                 if logs_channel:
                     await logs_channel.send(f"❌ Failed to rename channel {channel_id}: {e}")
             except Exception:
                 pass
+
+            return False
+
+
         return False
 
             return False
+
 
 
     async def send_to_webhook(self, url: str, content: str = None, embed: discord.Embed = None):

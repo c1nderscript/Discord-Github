@@ -30,7 +30,6 @@ from github_utils import verify_github_signature, is_github_event_relevant
 from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
 
-
 from formatters import (
     format_push_event,
     format_issue_event,
@@ -178,7 +177,11 @@ async def route_github_event(event_type: str, payload: dict):
         # Use enhanced PR handler with retry logic
         success = await handle_pull_request_event_with_retry(payload)
         if success:
+
+            logger.info(f"Successfully processed pull_request event")
+
             logger.info("Successfully processed pull_request event")
+
             if payload.get("action") in {"opened", "closed", "reopened"}:
                 asyncio.create_task(update_github_stats())
         else:
