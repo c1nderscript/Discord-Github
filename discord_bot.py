@@ -42,6 +42,14 @@ DEV_CHANNELS: list[int] = [
 ]
 
 
+@bot.command(name="clear")
+async def clear_channels(ctx: commands.Context) -> None:
+    """Clear all messages from development channels."""
+    for channel_id in DEV_CHANNELS:
+        await discord_bot_instance.purge_old_messages(channel_id, 0)
+    await ctx.send("✅ Channels cleared.")
+
+
 class DiscordBot:
     """Discord bot wrapper for sending GitHub webhook messages."""
 
@@ -309,8 +317,6 @@ async def clear_channels(ctx: commands.Context) -> None:
     for channel_id in DEV_CHANNELS:
         await discord_bot_instance.purge_channel(channel_id)
     await ctx.send("✅ Channels cleared.")
-
-
 
 
 

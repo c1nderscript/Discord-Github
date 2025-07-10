@@ -174,8 +174,6 @@ async def route_github_event(event_type: str, payload: dict):
 
             logger.info(f"Successfully processed pull_request event")
 
-            logger.info("Successfully processed pull_request event")
-
             if payload.get("action") in {"opened", "closed", "reopened"}:
                 asyncio.create_task(update_github_stats())
         else:
@@ -224,19 +222,12 @@ async def update_statistics() -> None:
         logger.error(f"Failed to gather repo stats: {exc}")
         return
 
-    total_commits = sum(s.commits for s in stats)
-    total_prs = sum(s.pull_requests for s in stats)
-    total_merges = sum(s.merges for s in stats)
-
-    """Update channel names and send repository statistics embeds."""
-    while not discord_bot_instance.ready:
-        await asyncio.sleep(1)
-
-    stats = await gather_repo_stats()
-
     total_commits = sum(r.commit_count for r in stats)
     total_prs = sum(r.pr_count for r in stats)
     total_merges = sum(r.merge_count for r in stats)
+
+    while not discord_bot_instance.ready:
+        await asyncio.sleep(1)
 
 
     await discord_bot_instance.update_channel_name(

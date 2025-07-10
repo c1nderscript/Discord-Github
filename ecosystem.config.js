@@ -1,16 +1,20 @@
+// Set DISCORD_GITHUB_HOME to the installation directory of the bot.
+// When deploying, export the variable or edit the fallback path below.
+const BASE = process.env.DISCORD_GITHUB_HOME || '/opt/discord-github';
+
 module.exports = {
   apps: [{
     name: 'discord-github-bot',
     script: 'run.py',
-    interpreter: '/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin/python',
-    cwd: '/home/cinder/Documents/D_Projects/Discord-Github',
+    interpreter: `${BASE}/.venv/bin/python`,
+    cwd: BASE,
     instances: 1,
     autorestart: true,
     watch: false,
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
-      PATH: '/home/cinder/Documents/D_Projects/Discord-Github/.venv/bin:' + process.env.PATH
+      PATH: `${BASE}/.venv/bin:` + process.env.PATH
     },
     error_file: './logs/err.log',
     out_file: './logs/out.log',
