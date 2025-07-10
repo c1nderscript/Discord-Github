@@ -3,7 +3,7 @@
 
 import asyncio
 import logging
-from typing import Dict, Tuple
+from typing import Dict
 
 import aiohttp
 
