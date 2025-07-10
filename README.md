@@ -2,6 +2,8 @@
 
 FastAPI-based webhook router that forwards GitHub events to Discord channels. This document provides a complete setup guide and instructions for maintaining each component, including GitHub webhooks.
 
+Additional setup and troubleshooting details can be found in the [docs directory](docs/README.md).
+
 ## How to Re-run the Webhook Script
 
 To re-run the webhook script `add_all_webhooks.py` when new repositories are created, follow these steps:
