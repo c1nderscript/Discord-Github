@@ -11,10 +11,11 @@ import aiohttp
 from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
 from config import settings
-
+from github_prs import fetch_open_pull_requests
 from formatters import format_pull_request_event
 
 import formatters
+
 
 # Setup logging
 setup_logging()
@@ -26,6 +27,22 @@ intents.message_content = True
 
 # Create bot instance
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Channels used during development that can be purged with the `!clear` command
+DEV_CHANNELS: list[int] = [
+    settings.channel_commits,
+    settings.channel_pull_requests,
+    settings.channel_releases,
+    settings.channel_code_merges,
+    settings.channel_commits_overview,
+    settings.channel_pull_requests_overview,
+    settings.channel_merges_overview,
+    settings.channel_issues,
+    settings.channel_deployment_status,
+    settings.channel_ci_builds,
+    settings.channel_gollum,
+    settings.channel_bot_logs,
+]
 
 
 class DiscordBot:
@@ -271,6 +288,7 @@ async def send_to_discord(
 
 
 
+
 async def fetch_open_pull_requests() -> List[Dict[str, Any]]:
     """Return a list of open pull requests across all repositories."""
     if not settings.github_token:
@@ -342,8 +360,29 @@ async def update(ctx: commands.Context) -> None:
 async def clear(ctx: commands.Context) -> None:
     """Clear all development-related channels."""
 
+
+@bot.command(name="update")
+async def update(ctx: commands.Context) -> None:
+    """Send embeds for all open pull requests."""
+    prs_by_repo = await fetch_open_pull_requests()
+    for repo, prs in prs_by_repo.items():
+        for pr in prs:
+            payload = {
+                "action": "opened",
+                "pull_request": pr,
+                "repository": {"full_name": repo},
+            }
+            embed = format_pull_request_event(payload)
+            await send_to_discord(settings.channel_pull_requests, embed=embed)
+
 @bot.command(name="clear")
 async def clear_channels(ctx: commands.Context) -> None:
+
+    """Clear all messages from development channels."""
+    for channel_id in DEV_CHANNELS:
+        await discord_bot_instance.purge_old_messages(channel_id, 0)
+    await ctx.send("✅ Channels cleared.")
+
     """Clear development-related Discord channels."""
     channels = [
         settings.channel_commits,
@@ -394,5 +433,3 @@ async def update_pull_requests(ctx: commands.Context) -> None:
     if added:
         save_pr_map(pr_map_data)
     await ctx.send(f"Added {added} pull request{'s' if added != 1 else ''}.")
-
-
