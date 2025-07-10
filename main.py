@@ -20,11 +20,16 @@ from github_utils import (
     verify_github_signature,
     is_github_event_relevant,
     gather_repo_stats,
+
+    RepoStats,
+)
+
 )
 
 from github_utils import verify_github_signature, is_github_event_relevant
 from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
+
 
 from formatters import (
     format_push_event,
@@ -210,6 +215,22 @@ async def route_github_event(event_type: str, payload: dict):
 
 
 async def update_statistics() -> None:
+
+    """Update channel names with repo statistics and post summary embeds."""
+    if not settings.github_token:
+        logger.warning("No GITHUB_TOKEN configured; skipping statistics update")
+        return
+
+    try:
+        stats = await gather_repo_stats()
+    except Exception as exc:
+        logger.error(f"Failed to gather repo stats: {exc}")
+        return
+
+    total_commits = sum(s.commits for s in stats)
+    total_prs = sum(s.pull_requests for s in stats)
+    total_merges = sum(s.merges for s in stats)
+
     """Update channel names and send repository statistics embeds."""
     while not discord_bot_instance.ready:
         await asyncio.sleep(1)
@@ -219,6 +240,7 @@ async def update_statistics() -> None:
     total_commits = sum(r.commit_count for r in stats)
     total_prs = sum(r.pr_count for r in stats)
     total_merges = sum(r.merge_count for r in stats)
+
 
     await discord_bot_instance.update_channel_name(
         settings.channel_commits, f"{total_commits}-commits"
@@ -232,12 +254,23 @@ async def update_statistics() -> None:
 
     for repo in stats:
         embed = discord.Embed(
+
+            title=repo.name,
+            color=discord.Color.blue(),
+        )
+        embed.add_field(name="Commits", value=str(repo.commits), inline=True)
+        embed.add_field(
+            name="Pull Requests", value=str(repo.pull_requests), inline=True
+        )
+        embed.add_field(name="Merges", value=str(repo.merges), inline=True)
+
             title=f"📊 Statistics for {repo.name}",
             color=discord.Color.blue(),
         )
         embed.add_field(name="Commits", value=str(repo.commit_count), inline=True)
         embed.add_field(name="Pull Requests", value=str(repo.pr_count), inline=True)
         embed.add_field(name="Merges", value=str(repo.merge_count), inline=True)
+
 
         await send_to_discord(settings.channel_commits, embed=embed)
         await send_to_discord(settings.channel_pull_requests, embed=embed)
