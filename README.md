@@ -166,3 +166,24 @@ repositories. The command queries the GitHub API using your configured token and
 username, then formats each pull request using the same embed style as webhook
 events.
 
+
+## Markdown Reports
+
+This repository includes a number of auto-generated reports in Markdown format. These files track webhook tests and pull request processing:
+
+- `WEBHOOK_TEST_RESULTS.md` – results from validating webhook configuration.
+- `pr_tracker.md` – summary of processed pull requests.
+- `unmergeable_prs_report.md` – list of PRs that could not be merged automatically.
+- `test_webhook.md` and `test_webhook_endpoint.md` – sample payloads and endpoint checks.
+
+For more detailed documentation, see the [docs](docs/README.md) folder or the project wiki.
+
+## Health Check and Maintenance
+
+Regular maintenance scripts help keep the bot reliable:
+
+- **Health Check**: run `python agents_health_check.py` to verify directories and log files match the expectations defined in `AGENTS.md`.
+- **Pull Request Cleanup**: execute `python cleanup_pr_messages.py` to remove Discord messages for closed PRs.
+- **Retroactive Cleanup**: if messages were missed, run `python pr_cleanup_tool.py` to check existing entries in `pr_message_map.json`.
+
+These scripts follow the asynchronous patterns described in `AGENTS.md` and should be run with the same environment variables used by `run.py`.
