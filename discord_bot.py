@@ -22,6 +22,22 @@ intents.message_content = True
 # Create bot instance
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# Channels used during development that can be purged with the `!clear` command
+DEV_CHANNELS: list[int] = [
+    settings.channel_commits,
+    settings.channel_pull_requests,
+    settings.channel_releases,
+    settings.channel_code_merges,
+    settings.channel_commits_overview,
+    settings.channel_pull_requests_overview,
+    settings.channel_merges_overview,
+    settings.channel_issues,
+    settings.channel_deployment_status,
+    settings.channel_ci_builds,
+    settings.channel_gollum,
+    settings.channel_bot_logs,
+]
+
 
 class DiscordBot:
     """Discord bot wrapper for sending GitHub webhook messages."""
@@ -239,3 +255,11 @@ async def send_to_discord(
             )
     else:
         return await discord_bot_instance.send_to_channel(channel_id, content, embed)
+
+
+@bot.command(name="clear")
+async def clear_channels(ctx: commands.Context) -> None:
+    """Clear all messages from development channels."""
+    for channel_id in DEV_CHANNELS:
+        await discord_bot_instance.purge_old_messages(channel_id, 0)
+    await ctx.send("✅ Channels cleared.")
