@@ -45,6 +45,14 @@ DEV_CHANNELS: list[int] = [
 ]
 
 
+@bot.command(name="clear")
+async def clear_channels(ctx: commands.Context) -> None:
+    """Clear all messages from development channels."""
+    for channel_id in DEV_CHANNELS:
+        await discord_bot_instance.purge_old_messages(channel_id, 0)
+    await ctx.send("✅ Channels cleared.")
+
+
 class DiscordBot:
     """Discord bot wrapper for sending GitHub webhook messages."""
 
@@ -331,32 +339,6 @@ async def fetch_open_pull_requests() -> List[Dict[str, Any]]:
                     prs.append(pr)
 
     return prs
-
-
-@bot.command(name="update")
-async def update(ctx: commands.Context) -> None:
-    """Populate the pull requests channel with all open PRs."""
-    prs = await fetch_open_pull_requests()
-
-    if not prs:
-        await ctx.send("No open pull requests found.")
-        return
-
-    for pr in prs:
-        payload = {
-            "action": "opened",
-            "pull_request": pr,
-            "repository": {"full_name": pr.get("repository_full_name", "")},
-        }
-        embed = format_pull_request_event(payload)
-        msg = await send_to_discord(settings.channel_pull_requests, embed=embed)
-        if msg:
-            key = f"{pr['repository_full_name']}#{pr['number']}"
-            data = load_pr_map()
-            data[key] = msg.id
-            save_pr_map(data)
-
-    await ctx.send("Pull request channel updated.")
 
 
 
