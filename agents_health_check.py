@@ -2,6 +2,7 @@
 """Health check script for AGENTS.MD compliance."""
 
 import sys
+import os
 from pathlib import Path
 from agents_config import AGENT_METADATA, AGENTS_CANONICAL_DIR, LOGS_DIR, STATE_DIR
 
@@ -35,6 +36,13 @@ def check_agent_compliance():
     """Check if the agent is compliant with AGENTS.MD specifications."""
     print("🔍 Checking AGENTS.MD compliance...")
     print("=" * 50)
+
+    # Display the directory source
+    env_value = os.getenv("AGENTS_DIR")
+    if env_value:
+        print(f"🌐 Using AGENTS_DIR from environment: {env_value}")
+    else:
+        print("🌐 AGENTS_DIR not set; using current directory")
 
     # Check canonical directory
     print(f"📁 Canonical directory: {AGENTS_CANONICAL_DIR}")

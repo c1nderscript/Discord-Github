@@ -66,6 +66,9 @@ use for sending messages. For example:
 DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_webhook_token/github
 ```
 
+Set `AGENTS_DIR` to specify where logs and state files are stored. If not set, the
+current working directory is used.
+
 You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
 If not set, messages older than 30 days are removed.
 
