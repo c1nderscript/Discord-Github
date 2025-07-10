@@ -13,6 +13,7 @@ from pr_map import load_pr_map, save_pr_map
 from config import settings
 from github_prs import fetch_open_pull_requests
 from formatters import format_pull_request_event
+from commands.setup import setup_channels
 
 import formatters
 
@@ -27,6 +28,7 @@ intents.message_content = True
 
 # Create bot instance
 bot = commands.Bot(command_prefix="!", intents=intents)
+bot.add_command(setup_channels)
 
 # Channels used during development that can be purged with the `!clear` command
 DEV_CHANNELS: list[int] = [

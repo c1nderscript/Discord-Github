@@ -185,6 +185,7 @@ The bot provides a few convenience commands when interacting directly in Discord
 
 - `!update` &ndash; Fetch all open pull requests across your repositories and repost them in the pull-requests channel. This is useful if the bot was offline when events occurred.
 - `!clear` &ndash; Remove **all** messages from the main development channels (commits, pull requests, releases, CI builds and code merges).
+- `!setup` &ndash; Create missing channels automatically so the bot can operate in a new server.
 
 
 
