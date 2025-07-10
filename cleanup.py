@@ -38,9 +38,16 @@ async def cleanup_pr_messages() -> None:
             try:
                 async with session.get(url, headers=headers) as resp:
                     if resp.status != 200:
-                        logger.warning(f"Failed to fetch PR {key}: {resp.status}")
+                        logger.warning(
+                            f"Failed to fetch PR {key}: {resp.status}"
+                        )
                         continue
                     data = await resp.json()
+                    if "state" not in data:
+                        logger.warning(
+                            f"Missing 'state' in PR response for {key}"
+                        )
+                        continue
             except Exception as exc:
                 logger.error(f"Error retrieving PR {key}: {exc}")
                 continue
