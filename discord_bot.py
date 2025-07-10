@@ -4,8 +4,9 @@ import discord
 from discord.ext import commands
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Any, Dict, List
 from datetime import datetime, timedelta
+import aiohttp
 
 from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
@@ -287,6 +288,79 @@ async def send_to_discord(
 
 
 
+
+async def fetch_open_pull_requests() -> List[Dict[str, Any]]:
+    """Return a list of open pull requests across all repositories."""
+    if not settings.github_token:
+        logger.error("GitHub token not configured")
+        return []
+
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {settings.github_token}",
+    }
+
+    repos_url = "https://api.github.com/user/repos"
+    params = {"per_page": 100, "visibility": "all", "affiliation": "owner"}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(repos_url, headers=headers, params=params) as resp:
+            if resp.status != 200:
+                logger.error("Failed to fetch repositories: %s", resp.status)
+                return []
+            repos = await resp.json()
+
+        prs: List[Dict[str, Any]] = []
+        for repo in repos:
+            repo_name = repo.get("full_name")
+            if not repo_name:
+                continue
+            url = f"https://api.github.com/repos/{repo_name}/pulls"
+            async with session.get(url, headers=headers, params={"state": "open"}) as pr_resp:
+                if pr_resp.status != 200:
+                    logger.error(
+                        "Failed to fetch PRs for %s: %s", repo_name, pr_resp.status
+                    )
+                    continue
+                data = await pr_resp.json()
+                for pr in data:
+                    pr["repository_full_name"] = repo_name
+                    prs.append(pr)
+
+    return prs
+
+
+@bot.command(name="update")
+async def update(ctx: commands.Context) -> None:
+    """Populate the pull requests channel with all open PRs."""
+    prs = await fetch_open_pull_requests()
+
+    if not prs:
+        await ctx.send("No open pull requests found.")
+        return
+
+    for pr in prs:
+        payload = {
+            "action": "opened",
+            "pull_request": pr,
+            "repository": {"full_name": pr.get("repository_full_name", "")},
+        }
+        embed = format_pull_request_event(payload)
+        msg = await send_to_discord(settings.channel_pull_requests, embed=embed)
+        if msg:
+            key = f"{pr['repository_full_name']}#{pr['number']}"
+            data = load_pr_map()
+            data[key] = msg.id
+            save_pr_map(data)
+
+    await ctx.send("Pull request channel updated.")
+
+
+@bot.command(name="clear")
+async def clear(ctx: commands.Context) -> None:
+    """Clear all development-related channels."""
+
+
 @bot.command(name="update")
 async def update(ctx: commands.Context) -> None:
     """Send embeds for all open pull requests."""
@@ -300,7 +374,7 @@ async def update(ctx: commands.Context) -> None:
             }
             embed = format_pull_request_event(payload)
             await send_to_discord(settings.channel_pull_requests, embed=embed)
-=======
+
 @bot.command(name="clear")
 async def clear_channels(ctx: commands.Context) -> None:
 
@@ -314,6 +388,16 @@ async def clear_channels(ctx: commands.Context) -> None:
         settings.channel_commits,
         settings.channel_pull_requests,
         settings.channel_releases,
+        settings.channel_ci_builds,
+        settings.channel_code_merges,
+    ]
+
+    await asyncio.gather(
+        *(discord_bot_instance.purge_old_messages(ch, 0) for ch in channels)
+    )
+
+    await ctx.send("Development channels cleared.")
+
         settings.channel_code_merges,
         settings.channel_ci_builds,
         settings.channel_deployment_status,
@@ -349,6 +433,3 @@ async def update_pull_requests(ctx: commands.Context) -> None:
     if added:
         save_pr_map(pr_map_data)
     await ctx.send(f"Added {added} pull request{'s' if added != 1 else ''}.")
-
-
-

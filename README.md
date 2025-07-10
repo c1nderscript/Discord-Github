@@ -124,6 +124,13 @@ To quickly remove **all** messages from the development channels, type:
 
 The command iterates over the configured development channels and purges every message, providing a clean slate for testing.
 
+## Discord Bot Commands
+
+The bot provides a few convenience commands when interacting directly in Discord.
+
+- `!update` &ndash; Fetch all open pull requests across your repositories and repost them in the pull-requests channel. This is useful if the bot was offline when events occurred.
+- `!clear` &ndash; Remove **all** messages from the main development channels (commits, pull requests, releases, CI builds and code merges).
+
 
 
 ## Discord Commands
