@@ -116,3 +116,11 @@ This script checks each entry in `pr_message_map.json`, queries the GitHub API t
 
 
 
+## Discord Commands
+
+The bot provides a few text commands directly in Discord. Run `!update` to
+manually post embeds for all currently open pull requests across your
+repositories. The command queries the GitHub API using your configured token and
+username, then formats each pull request using the same embed style as webhook
+events.
+

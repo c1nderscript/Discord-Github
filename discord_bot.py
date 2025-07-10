@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
 from config import settings
+from github_prs import fetch_open_pull_requests
+from formatters import format_pull_request_event
 
 # Setup logging
 setup_logging()
@@ -239,3 +241,18 @@ async def send_to_discord(
             )
     else:
         return await discord_bot_instance.send_to_channel(channel_id, content, embed)
+
+
+@bot.command(name="update")
+async def update(ctx: commands.Context) -> None:
+    """Send embeds for all open pull requests."""
+    prs_by_repo = await fetch_open_pull_requests()
+    for repo, prs in prs_by_repo.items():
+        for pr in prs:
+            payload = {
+                "action": "opened",
+                "pull_request": pr,
+                "repository": {"full_name": repo},
+            }
+            embed = format_pull_request_event(payload)
+            await send_to_discord(settings.channel_pull_requests, embed=embed)
