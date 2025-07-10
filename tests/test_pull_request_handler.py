@@ -57,7 +57,7 @@ class TestPullRequestHandler(unittest.TestCase):
             return None
 
         with patch(
-            "pull_request_handler.process_pull_request_event",
+            "pull_request_handler._process_pull_request_event",
             side_effect=side_effect,
         ) as proc, patch("asyncio.sleep", new_callable=AsyncMock) as sleep:
             result = asyncio.run(
@@ -72,7 +72,7 @@ class TestPullRequestHandler(unittest.TestCase):
             raise RuntimeError("fail")
 
         with patch(
-            "pull_request_handler.process_pull_request_event", side_effect=fail
+            "pull_request_handler._process_pull_request_event", side_effect=fail
         ) as proc, patch("asyncio.sleep", new_callable=AsyncMock) as sleep:
             result = asyncio.run(
                 pull_request_handler.handle_pull_request_event_with_retry({}, retries=2, delay=0)
