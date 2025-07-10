@@ -2,9 +2,18 @@
 
 import hashlib
 import hmac
+import logging
+from typing import Optional, List, Dict, Tuple
+
+import aiohttp
 from fastapi import Request, HTTPException
 
 from config import settings
+
+
+logger = logging.getLogger(__name__)
+
+GITHUB_API_BASE = "https://api.github.com"
 
 
 async def verify_github_signature(request: Request, body: bytes) -> None:
@@ -47,3 +56,101 @@ def is_github_event_relevant(event_type: str, payload: dict) -> bool:
             return False
 
     return True
+
+
+async def _fetch_total_count(
+    session: aiohttp.ClientSession,
+    url: str,
+    headers: Dict[str, str],
+    params: Dict[str, str],
+) -> int:
+    """Helper to fetch the GitHub API total_count value."""
+    try:
+        async with session.get(url, headers=headers, params=params) as resp:
+            if resp.status != 200:
+                logger.error("Failed request %s: %s", url, resp.status)
+                return 0
+            data = await resp.json()
+            return int(data.get("total_count", 0))
+    except Exception as exc:
+        logger.error("Error fetching %s: %s", url, exc)
+        return 0
+
+
+async def fetch_repo_stats() -> Tuple[List[Dict[str, int]], Dict[str, int]]:
+    """Gather commit and pull request statistics for all owned repositories."""
+
+    if not settings.github_username:
+        raise ValueError("github_username not configured")
+
+    headers = {"Accept": "application/vnd.github+json"}
+    if settings.github_token:
+        headers["Authorization"] = f"token {settings.github_token}"
+
+    commit_headers = {
+        "Accept": "application/vnd.github.cloak-preview+json",
+    }
+    if settings.github_token:
+        commit_headers["Authorization"] = f"token {settings.github_token}"
+
+    repo_stats: List[Dict[str, int]] = []
+    totals = {
+        "commits": 0,
+        "pull_requests": 0,
+        "merged_pull_requests": 0,
+    }
+
+    async with aiohttp.ClientSession() as session:
+        repos: List[Dict[str, str]] = []
+        page = 1
+        while True:
+            params = {"per_page": "100", "type": "owner", "page": str(page)}
+            url = f"{GITHUB_API_BASE}/user/repos"
+            async with session.get(url, headers=headers, params=params) as resp:
+                if resp.status != 200:
+                    logger.error("Failed to list repositories: %s", resp.status)
+                    break
+                data = await resp.json()
+                if not data:
+                    break
+                repos.extend(data)
+                page += 1
+
+        for repo in repos:
+            name = repo.get("full_name")
+            if not name:
+                continue
+
+            commit_count = await _fetch_total_count(
+                session,
+                f"{GITHUB_API_BASE}/search/commits",
+                commit_headers,
+                {"q": f"repo:{name}"},
+            )
+            pr_count = await _fetch_total_count(
+                session,
+                f"{GITHUB_API_BASE}/search/issues",
+                headers,
+                {"q": f"repo:{name}+type:pr"},
+            )
+            merged_pr_count = await _fetch_total_count(
+                session,
+                f"{GITHUB_API_BASE}/search/issues",
+                headers,
+                {"q": f"repo:{name}+type:pr+is:merged"},
+            )
+
+            repo_stats.append(
+                {
+                    "name": name,
+                    "commits": commit_count,
+                    "pull_requests": pr_count,
+                    "merged_pull_requests": merged_pr_count,
+                }
+            )
+
+            totals["commits"] += commit_count
+            totals["pull_requests"] += pr_count
+            totals["merged_pull_requests"] += merged_pr_count
+
+    return repo_stats, totals
