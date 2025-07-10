@@ -114,5 +114,15 @@ python pr_cleanup_tool.py
 
 This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
 
+## Clearing Development Channels
+
+To quickly remove **all** messages from the development channels, type:
+
+```bash
+!clear
+```
+
+The command iterates over the configured development channels and purges every message, providing a clean slate for testing.
+
 
 
