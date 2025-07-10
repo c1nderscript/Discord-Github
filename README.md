@@ -31,6 +31,44 @@ See the [Channel mapping](docs/ChannelMapping.md) document for routing details.
 
 ### Environment Variables
 
+Copy `.env.template` to `.env` and edit each section. The template groups
+variables for easier configuration. A shortened example is shown below:
+
+```ini
+# Discord settings
+DISCORD_BOT_TOKEN=your_token
+DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/...
+
+# GitHub settings
+GITHUB_WEBHOOK_SECRET=secret
+GITHUB_TOKEN=token
+GITHUB_USERNAME=username
+WEBHOOK_URL=http://your-server/github
+
+# Server settings
+HOST=0.0.0.0
+PORT=8000
+
+# Discord channel IDs
+CHANNEL_COMMITS=1392213436720615504
+CHANNEL_PULL_REQUESTS=1392485974398861354
+CHANNEL_CODE_MERGES=1392213492156727387
+CHANNEL_ISSUES=1392213509382737991
+CHANNEL_RELEASES=1392213528542445628
+CHANNEL_DEPLOYMENT_STATUS=1392213551665381486
+CHANNEL_CI_BUILDS=1392457950169268334
+CHANNEL_GOLLUM=1392213582963540028
+CHANNEL_BOT_LOGS=1392213610167664670
+CHANNEL_COMMITS_OVERVIEW=1392467209162592266
+CHANNEL_PULL_REQUESTS_OVERVIEW=1392467228624158730
+CHANNEL_MERGES_OVERVIEW=1392467252711919666
+```
+
+You can control how long messages stay in key channels by setting
+`MESSAGE_RETENTION_DAYS` (default `30`). Overview channels are optional and can
+be customised if your Discord server uses different IDs.
+
+
 | Variable | Description |
 |----------|-------------|
 | `DISCORD_BOT_TOKEN` | Bot token used to connect to Discord |
@@ -64,6 +102,7 @@ docker compose up -d
 ```
 
 Traefik configuration is included via `traefik.yml`.
+
 
 ## Systemd & Supervisor
 
