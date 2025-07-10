@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 
 from logging_config import setup_logging
 from config import settings
-import discord
 from discord_bot import send_to_discord, discord_bot_instance
 from pull_request_handler import handle_pull_request_event_with_retry
 
@@ -20,13 +19,8 @@ from github_utils import (
     verify_github_signature,
     is_github_event_relevant,
     gather_repo_stats,
-
     RepoStats,
 )
-
-)
-
-from github_utils import verify_github_signature, is_github_event_relevant
 from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
 
@@ -257,23 +251,12 @@ async def update_statistics() -> None:
 
     for repo in stats:
         embed = discord.Embed(
-
-            title=repo.name,
-            color=discord.Color.blue(),
-        )
-        embed.add_field(name="Commits", value=str(repo.commits), inline=True)
-        embed.add_field(
-            name="Pull Requests", value=str(repo.pull_requests), inline=True
-        )
-        embed.add_field(name="Merges", value=str(repo.merges), inline=True)
-
             title=f"📊 Statistics for {repo.name}",
             color=discord.Color.blue(),
         )
         embed.add_field(name="Commits", value=str(repo.commit_count), inline=True)
         embed.add_field(name="Pull Requests", value=str(repo.pr_count), inline=True)
         embed.add_field(name="Merges", value=str(repo.merge_count), inline=True)
-
 
         await send_to_discord(settings.channel_commits, embed=embed)
         await send_to_discord(settings.channel_pull_requests, embed=embed)
