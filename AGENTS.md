@@ -1,7 +1,3 @@
-5. 
-
-3. ------
-
    ## name: "Discord GitHub Webhook Bot" description: "A FastAPI-based webhook router that receives GitHub events and intelligently distributes them to specific Discord channels based on event type and context" category: "Backend Service" author: "Discord-GitHub Integration Team" tags: ["python", "fastapi", "discord", "github", "webhooks", "automation", "bot"] lastUpdated: "2025-07-08"
 
    # Discord GitHub Webhook Bot
@@ -94,30 +90,6 @@ Additional overview channels aggregate daily summaries and reports:
 - `settings.channel_commits_overview` – 1392467209162592266
 - `settings.channel_pull_requests_overview` – 1392467228624158730
 - `settings.channel_merges_overview` – 1392467252711919666
-=======
-   CHANNEL_MAP = {
-       "push": settings.channel_commits,                    # 1392213436720615504
-       "pull_request": handle_pr_routing,                   # Special handler
-       "issues": settings.channel_issues,                   # 1392213509382737991
-       "release": settings.channel_releases,                # 1392213528542445628
-       "deployment_status": settings.channel_deployment_status, # 1392213551665381486
-   "gollum": settings.channel_gollum,                   # 1392213582963540028
-   "default": settings.channel_bot_logs                 # 1392213610167664670
-   }
-   ```
-
-
-
-   Overview channels aggregate summaries for high-level discussion:
-
-   - `channel_commits_overview` – 1392467209162592266
-   - `channel_pull_requests_overview` – 1392467228624158730
-   - `channel_merges_overview` – 1392467252711919666
-
-   Overview channels provide daily summaries of activity:
-   - `channel_commits_overview` (1392467209162592266)
-   - `channel_pull_requests_overview` (1392467228624158730)
-   - `channel_merges_overview` (1392467252711919666)
 
 
    ### Special Routing Logic
@@ -452,7 +424,7 @@ Additional overview channels aggregate daily summaries and reports:
 
    ------
 
-   **Note**: This agents.md file should be updated whenever new event types are added, channel mappings change, or significant architectural modifications are made to the webhook routing system.
+   **Note**: Any change to channel IDs or the addition of new events must update this file to keep channel routing documentation accurate.
 
    ## Changelog
 
