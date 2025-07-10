@@ -2,6 +2,7 @@
 
 FastAPI-based webhook router that forwards GitHub events to Discord channels. This document provides a complete setup guide and instructions for maintaining each component, including GitHub webhooks.
 
+The project includes a helper script `setup_env.sh` that ensures `pip` is installed, creates a `.venv` directory and installs all Python dependencies.
 ## How to Re-run the Webhook Script
 
 To re-run the webhook script `add_all_webhooks.py` when new repositories are created, follow these steps:
@@ -43,11 +44,11 @@ The repository includes a GitHub Actions workflow that automatically runs the we
    ```bash
    cp .env.template .env
    ```
-2. Install dependencies:
+2. Create a Python virtual environment and install dependencies:
    ```bash
-   pip install -r requirements.txt
+   bash setup_env.sh
    ```
-3. Run the bot:
+3. Run the bot from the virtual environment:
    ```bash
    python run.py
    ```
@@ -155,14 +156,4 @@ The bot provides a few convenience commands when interacting directly in Discord
 
 - `!update` &ndash; Fetch all open pull requests across your repositories and repost them in the pull-requests channel. This is useful if the bot was offline when events occurred.
 - `!clear` &ndash; Remove **all** messages from the main development channels (commits, pull requests, releases, CI builds and code merges).
-
-
-
-## Discord Commands
-
-The bot provides a few text commands directly in Discord. Run `!update` to
-manually post embeds for all currently open pull requests across your
-repositories. The command queries the GitHub API using your configured token and
-username, then formats each pull request using the same embed style as webhook
-events.
 
