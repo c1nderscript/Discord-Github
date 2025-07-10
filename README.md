@@ -69,6 +69,7 @@ DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_web
 You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
 If not set, messages older than 30 days are removed.
 
+
 The bot posts messages to multiple Discord channels. Override their IDs in `.env` if your server uses different channels:
 
 - `CHANNEL_COMMITS`
@@ -82,6 +83,23 @@ The bot posts messages to multiple Discord channels. Override their IDs in `.env
 - `CHANNEL_DEPLOYMENT_STATUS`
 - `CHANNEL_GOLLUM`
 - `CHANNEL_BOT_LOGS`
+
+The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
+
+```ini
+CHANNEL_COMMITS_OVERVIEW=1392467209162592266
+CHANNEL_PULL_REQUESTS_OVERVIEW=1392467228624158730
+CHANNEL_MERGES_OVERVIEW=1392467252711919666
+```
+
+The bot can also send daily summaries to dedicated overview channels. Add the
+following optional IDs to your `.env`:
+
+- `CHANNEL_COMMITS_OVERVIEW` – daily commit digest channel
+- `CHANNEL_PULL_REQUESTS_OVERVIEW` – pull request overview channel
+- `CHANNEL_MERGES_OVERVIEW` – merge summary channel
+
+
 
 ## Pull Request Message Cleanup
 
@@ -121,5 +139,30 @@ python pr_cleanup_tool.py
 
 This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
 
+## Clearing Development Channels
 
+To quickly remove **all** messages from the development channels, type:
+
+```bash
+!clear
+```
+
+The command iterates over the configured development channels and purges every message, providing a clean slate for testing.
+
+## Discord Bot Commands
+
+The bot provides a few convenience commands when interacting directly in Discord.
+
+- `!update` &ndash; Fetch all open pull requests across your repositories and repost them in the pull-requests channel. This is useful if the bot was offline when events occurred.
+- `!clear` &ndash; Remove **all** messages from the main development channels (commits, pull requests, releases, CI builds and code merges).
+
+
+
+## Discord Commands
+
+The bot provides a few text commands directly in Discord. Run `!update` to
+manually post embeds for all currently open pull requests across your
+repositories. The command queries the GitHub API using your configured token and
+username, then formats each pull request using the same embed style as webhook
+events.
 
