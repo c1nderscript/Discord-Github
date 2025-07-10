@@ -166,3 +166,7 @@ repositories. The command queries the GitHub API using your configured token and
 username, then formats each pull request using the same embed style as webhook
 events.
 
+
+## Testing
+Run `pip install -r requirements.txt` to install dependencies, then execute `pytest` to run the unit tests.
+
