@@ -88,10 +88,18 @@
    }
    ```
 
+
+   Overview channels aggregate summaries for high-level discussion:
+
+   - `channel_commits_overview` – 1392467209162592266
+   - `channel_pull_requests_overview` – 1392467228624158730
+   - `channel_merges_overview` – 1392467252711919666
+
    Overview channels provide daily summaries of activity:
    - `channel_commits_overview` (1392467209162592266)
    - `channel_pull_requests_overview` (1392467228624158730)
    - `channel_merges_overview` (1392467252711919666)
+
 
    ### Special Routing Logic
 
@@ -174,6 +182,9 @@
    CHANNEL_DEPLOYMENT_STATUS=1392213551665381486
    CHANNEL_GOLLUM=1392213582963540028
    CHANNEL_BOT_LOGS=1392213610167664670
+   CHANNEL_COMMITS_OVERVIEW=1392467209162592266
+   CHANNEL_PULL_REQUESTS_OVERVIEW=1392467228624158730
+   CHANNEL_MERGES_OVERVIEW=1392467252711919666
    ```
 
    ### Pydantic Settings Model

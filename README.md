@@ -69,12 +69,21 @@ DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_web
 You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
 If not set, messages older than 30 days are removed.
 
+The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
+
+```ini
+CHANNEL_COMMITS_OVERVIEW=1392467209162592266
+CHANNEL_PULL_REQUESTS_OVERVIEW=1392467228624158730
+CHANNEL_MERGES_OVERVIEW=1392467252711919666
+```
+
 The bot can also send daily summaries to dedicated overview channels. Add the
 following optional IDs to your `.env`:
 
 - `CHANNEL_COMMITS_OVERVIEW` – daily commit digest channel
 - `CHANNEL_PULL_REQUESTS_OVERVIEW` – pull request overview channel
 - `CHANNEL_MERGES_OVERVIEW` – merge summary channel
+
 
 ## Pull Request Message Cleanup
 
