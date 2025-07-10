@@ -145,71 +145,23 @@ class DiscordBot:
             try:
                 logs_channel = self.bot.get_channel(settings.channel_bot_logs)
                 if logs_channel:
-                    await logs_channel.send(f"❌ Failed to purge channel {channel_id}: {e}")
+                    await logs_channel.send(
+                        f"❌ Failed to purge channel {channel_id}: {e}"
+                    )
             except Exception:
                 pass
 
     async def update_channel_name(self, channel_id: int, new_name: str) -> bool:
-
-        """Rename a Discord channel."""
-
-
         """Rename a Discord channel."""
         if not self.ready:
             await self.bot.wait_until_ready()
+
         channel = self.bot.get_channel(channel_id)
         if not channel:
-            logger.error(f"Channel {channel_id} not found for renaming")
+            logger.error(f"Channel {channel_id} not found for rename")
             return False
-        try:
-
-
-        """Update the name of a Discord channel."""
-
-        """Rename a Discord channel."""
-
-
-        if not self.ready:
-            await self.bot.wait_until_ready()
 
         try:
-            channel = self.bot.get_channel(channel_id)
-            if not channel:
-                logger.error(f"Channel {channel_id} not found for rename")
-                return False
-
-            await channel.edit(name=new_name)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to rename channel {channel_id} to {new_name}: {e}")
-
-
-
-
-            await channel.edit(name=new_name)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to rename channel {channel_id}: {e}")
-
-
-            try:
-                logs_channel = self.bot.get_channel(settings.channel_bot_logs)
-                if logs_channel:
-                    await logs_channel.send(f"❌ Failed to rename channel {channel_id}: {e}")
-            except Exception:
-                pass
-
-            return False
-
-
-        return False
-
-            return False
-
-
-
-    async def send_to_webhook(self, url: str, content: str = None, embed: discord.Embed = None):
-
             await channel.edit(name=new_name)
             return True
         except Exception as e:
@@ -217,7 +169,9 @@ class DiscordBot:
             try:
                 logs_channel = self.bot.get_channel(settings.channel_bot_logs)
                 if logs_channel:
-                    await logs_channel.send(f"❌ Failed to rename channel {channel_id}: {e}")
+                    await logs_channel.send(
+                        f"❌ Failed to rename channel {channel_id}: {e}"
+                    )
             except Exception:
                 pass
             return False
@@ -225,7 +179,6 @@ class DiscordBot:
     async def send_to_webhook(
         self, url: str, content: str = None, embed: discord.Embed = None
     ):
-
         """Send a message to a Discord webhook URL."""
         import aiohttp
 
@@ -339,8 +292,6 @@ async def send_to_discord(
         return await discord_bot_instance.send_to_channel(channel_id, content, embed)
 
 
-
-
 async def fetch_open_pull_requests() -> List[Dict[str, Any]]:
     """Return a list of open pull requests across all repositories."""
     if not settings.github_token:
@@ -368,7 +319,9 @@ async def fetch_open_pull_requests() -> List[Dict[str, Any]]:
             if not repo_name:
                 continue
             url = f"https://api.github.com/repos/{repo_name}/pulls"
-            async with session.get(url, headers=headers, params={"state": "open"}) as pr_resp:
+            async with session.get(
+                url, headers=headers, params={"state": "open"}
+            ) as pr_resp:
                 if pr_resp.status != 200:
                     logger.error(
                         "Failed to fetch PRs for %s: %s", repo_name, pr_resp.status
@@ -411,31 +364,6 @@ async def update(ctx: commands.Context) -> None:
 @bot.command(name="clear")
 async def clear(ctx: commands.Context) -> None:
     """Clear all development-related channels."""
-
-
-@bot.command(name="update")
-async def update(ctx: commands.Context) -> None:
-    """Send embeds for all open pull requests."""
-    prs_by_repo = await fetch_open_pull_requests()
-    for repo, prs in prs_by_repo.items():
-        for pr in prs:
-            payload = {
-                "action": "opened",
-                "pull_request": pr,
-                "repository": {"full_name": repo},
-            }
-            embed = format_pull_request_event(payload)
-            await send_to_discord(settings.channel_pull_requests, embed=embed)
-
-@bot.command(name="clear")
-async def clear_channels(ctx: commands.Context) -> None:
-
-    """Clear all messages from development channels."""
-    for channel_id in DEV_CHANNELS:
-        await discord_bot_instance.purge_old_messages(channel_id, 0)
-    await ctx.send("✅ Channels cleared.")
-
-    """Clear development-related Discord channels."""
     channels = [
         settings.channel_commits,
         settings.channel_pull_requests,
@@ -443,13 +371,19 @@ async def clear_channels(ctx: commands.Context) -> None:
         settings.channel_ci_builds,
         settings.channel_code_merges,
     ]
-
     await asyncio.gather(
         *(discord_bot_instance.purge_old_messages(ch, 0) for ch in channels)
     )
+    await ctx.send("✅ Channels cleared.")
 
-    await ctx.send("Development channels cleared.")
 
+@bot.command(name="clear_channels")
+async def clear_channels(ctx: commands.Context) -> None:
+    """Clear development-related Discord channels."""
+    channels = [
+        settings.channel_commits,
+        settings.channel_pull_requests,
+        settings.channel_releases,
         settings.channel_code_merges,
         settings.channel_ci_builds,
         settings.channel_deployment_status,
