@@ -1,143 +1,84 @@
 # Discord-Github
 
-FastAPI-based webhook router that forwards GitHub events to Discord channels. This document provides a complete setup guide and instructions for maintaining each component, including GitHub webhooks.
+A webhook router that receives GitHub events and posts rich messages to Discord. It uses FastAPI for the HTTP layer and `discord.py` for interacting with Discord.
+
+
+## Architecture
 
 Additional setup and troubleshooting details can be found in the [docs directory](docs/README.md).
 
 ## How to Re-run the Webhook Script
 
-To re-run the webhook script `add_all_webhooks.py` when new repositories are created, follow these steps:
 
-1. Ensure your `.env` file is correctly configured with the following variables:
-   - `GITHUB_TOKEN`: Your GitHub personal access token with repository access.
-   - `GITHUB_WEBHOOK_SECRET`: The secret for verifying webhooks.
-   - `GITHUB_USERNAME`: Your GitHub username.
-   - `WEBHOOK_URL`: The URL for the webhook destination (e.g., your service endpoint).
+- **`main.py`** – FastAPI application exposing `/github` and `/health` endpoints.
+- **`discord_bot.py`** – Discord client used to send embeds to channels.
+- **`run.py`** – simple launcher that runs the app with Uvicorn.
+- **Utilities** – scripts like `add_all_webhooks.py` and `cleanup_pr_messages.py` help manage webhooks and message history.
 
-2. Run the script using:
-   ```bash
-   python add_all_webhooks.py
-   ```
-
-This will add the necessary webhooks to all repositories associated with your GitHub account.
-
-### Automated Weekly Execution
-
-The repository includes a GitHub Actions workflow that automatically runs the webhook script every Sunday at 2 AM UTC to ensure all repositories have the required webhooks.
-
-**To enable the automated workflow:**
-
-1. Set up the following repository secrets in your GitHub repository settings:
-   - Go to your repository → Settings → Secrets and variables → Actions
-   - Click "New repository secret" for each of the following:
-     - `GITHUB_TOKEN`: Your GitHub personal access token (with repo permissions)
-     - `GITHUB_WEBHOOK_SECRET`: The secret for webhook verification
-     - `GITHUB_USERNAME`: Your GitHub username
-     - `WEBHOOK_URL`: The URL for the webhook destination (e.g., `http://65.21.253.0:8000/github`)
-
-2. The workflow will automatically run weekly, or you can trigger it manually from the Actions tab.
-
-3. If the workflow fails, it will automatically create an issue in the repository for investigation.
+See the [Channel mapping](docs/ChannelMapping.md) document for routing details.
 
 ## Setup
 
-1. Copy `.env.template` to `.env` and add your configuration:
-   ```bash
-   cp .env.template .env
-   ```
+1. Copy `.env.template` to `.env` and fill in the required values.
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the bot:
+3. Start the bot:
    ```bash
    python run.py
    ```
 
-## Available Routes
-
-- `POST /github` – receive GitHub webhook events.
-- `GET /health` – simple health check returning `{"status": "ok"}`.
-
 ### Environment Variables
 
-Set `DISCORD_WEBHOOK_URL` in your `.env` file to the Discord webhook you want to
-use for sending messages. For example:
+| Variable | Description |
+|----------|-------------|
+| `DISCORD_BOT_TOKEN` | Bot token used to connect to Discord |
+| `DISCORD_WEBHOOK_URL` | Optional Discord webhook URL for message delivery |
+| `GITHUB_WEBHOOK_SECRET` | Secret used to validate GitHub webhooks |
+| `GITHUB_TOKEN` | Personal access token for GitHub API calls |
+| `GITHUB_USERNAME` | GitHub username used by helper scripts |
+| `WEBHOOK_URL` | Base webhook URL when creating webhooks |
+| `HOST` | Bind address for the FastAPI server |
+| `PORT` | Listening port for the FastAPI server |
+| `CHANNEL_COMMITS` | Channel for push events |
+| `CHANNEL_PULL_REQUESTS` | Channel for pull request events |
+| `CHANNEL_CODE_MERGES` | Channel for merged pull requests |
+| `CHANNEL_ISSUES` | Channel for issue events |
+| `CHANNEL_RELEASES` | Channel for releases |
+| `CHANNEL_DEPLOYMENT_STATUS` | Channel for deployment notifications |
+| `CHANNEL_GOLLUM` | Channel for wiki updates |
+| `CHANNEL_BOT_LOGS` | Fallback channel for errors |
+| `CHANNEL_COMMITS_OVERVIEW` | Optional overview channel for commits |
+| `CHANNEL_PULL_REQUESTS_OVERVIEW` | Optional overview channel for PRs |
+| `CHANNEL_MERGES_OVERVIEW` | Optional overview channel for merges |
 
-```ini
-DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_webhook_token/github
-```
+`MESSAGE_RETENTION_DAYS` can be set to automatically prune older messages (default `30`).
 
-You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
-If not set, messages older than 30 days are removed.
+## Docker
 
-
-The bot posts messages to multiple Discord channels. Override their IDs in `.env` if your server uses different channels:
-
-- `CHANNEL_COMMITS`
-- `CHANNEL_COMMITS_OVERVIEW`
-- `CHANNEL_PULL_REQUESTS`
-- `CHANNEL_PULL_REQUESTS_OVERVIEW`
-- `CHANNEL_CODE_MERGES`
-- `CHANNEL_MERGES_OVERVIEW`
-- `CHANNEL_ISSUES`
-- `CHANNEL_RELEASES`
-- `CHANNEL_DEPLOYMENT_STATUS`
-- `CHANNEL_GOLLUM`
-- `CHANNEL_BOT_LOGS`
-
-The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
-
-```ini
-CHANNEL_COMMITS_OVERVIEW=1392467209162592266
-CHANNEL_PULL_REQUESTS_OVERVIEW=1392467228624158730
-CHANNEL_MERGES_OVERVIEW=1392467252711919666
-```
-
-The bot can also send daily summaries to dedicated overview channels. Add the
-following optional IDs to your `.env`:
-
-- `CHANNEL_COMMITS_OVERVIEW` – daily commit digest channel
-- `CHANNEL_PULL_REQUESTS_OVERVIEW` – pull request overview channel
-- `CHANNEL_MERGES_OVERVIEW` – merge summary channel
-
-
-
-## Pull Request Message Cleanup
-
-When a pull request is opened or marked ready for review, the bot records the Discord message ID in `pr_message_map.json`.
-Once the pull request is closed (merged or not), the stored message is automatically deleted from the `#pull-requests` channel.
-The JSON file maps `repo_name#pr_number` to the associated Discord message ID and is created at runtime in the project root.
-
-
-## Message Retention
-
-Old messages can clutter channels. The bot automatically removes messages older than `MESSAGE_RETENTION_DAYS` from the commits, pull requests and releases channels during startup. Set this environment variable to control the retention period (default is 30 days).
-
-
-The utility script `cleanup_pr_messages.py` can remove stale entries if events were missed. It loads `pr_message_map.json`, checks each pull request's state via the GitHub API, deletes the corresponding Discord message when the PR is closed or merged, and updates the file.
-This cleanup runs automatically on bot startup but can also be invoked manually:
+The repository includes a `docker-compose.yml` that builds the image and exposes port `8000`. Run the service with:
 
 ```bash
-python cleanup_pr_messages.py
+docker compose up -d
 ```
 
+Traefik configuration is included via `traefik.yml`.
 
-The helper function `cleanup_pr_messages` checks this file on startup. It uses the GitHub API
-to determine if the referenced pull requests are already closed and, if so, deletes the
-corresponding messages from Discord before removing the entries from the JSON map. This
-self-healing step ensures stale PR notifications are removed even if the bot was offline
-when the pull request closed. The cleanup routine requires a valid `GITHUB_TOKEN` so the bot
-can query pull request status.
+## Systemd & Supervisor
 
+`discord-github-bot.service` and `supervisor.conf` provide examples for running the bot as a service. Adjust the paths inside the files and enable either systemd or supervisor on your host.
 
-## Retroactive PR Cleanup
+## Tests
 
-If the bot missed deleting pull request messages (for example, it was offline when a PR was closed), you can remove outdated messages manually:
+Install the requirements and run:
 
 ```bash
-python pr_cleanup_tool.py
+pytest -q
 ```
+
+
+## Documentation
 
 This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
 
@@ -167,11 +108,10 @@ The bot provides a few convenience commands when interacting directly in Discord
 
 
 
-## Discord Commands
 
-The bot provides a few text commands directly in Discord. Run `!update` to
-manually post embeds for all currently open pull requests across your
-repositories. The command queries the GitHub API using your configured token and
-username, then formats each pull request using the same embed style as webhook
-events.
+Additional guides live in the [docs/](docs) folder:
+
+- [Channel Mapping](docs/ChannelMapping.md)
+- [Deployment](docs/Deployment.md)
+- [Unmergeable PR Report](unmergeable_prs_report.md)
 
