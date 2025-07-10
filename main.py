@@ -8,25 +8,17 @@ from fastapi.responses import JSONResponse
 
 from logging_config import setup_logging
 from config import settings
-import discord
 from discord_bot import send_to_discord, discord_bot_instance
 from pull_request_handler import handle_pull_request_event_with_retry
 
 from cleanup import cleanup_pr_messages
 
 
-from pr_map import load_pr_map, save_pr_map
 from github_utils import (
     verify_github_signature,
     is_github_event_relevant,
     gather_repo_stats,
-
-    RepoStats,
 )
-
-)
-
-from github_utils import verify_github_signature, is_github_event_relevant
 from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
 
@@ -105,9 +97,7 @@ async def update_github_stats() -> None:
                 await message.edit(embed=embed)
                 continue
             except Exception as exc:
-                logger.warning(
-                    f"Failed to edit stats message in {channel_id}: {exc}"
-                )
+                logger.warning(f"Failed to edit stats message in {channel_id}: {exc}")
 
         msg = await send_to_discord(channel_id, embed=embed)
         if msg:
@@ -218,8 +208,8 @@ async def route_github_event(event_type: str, payload: dict):
 
 
 async def update_statistics() -> None:
-
     """Update channel names with repo statistics and post summary embeds."""
+
     if not settings.github_token:
         logger.warning("No GITHUB_TOKEN configured; skipping statistics update")
         return
@@ -230,20 +220,15 @@ async def update_statistics() -> None:
         logger.error(f"Failed to gather repo stats: {exc}")
         return
 
-    total_commits = sum(s.commits for s in stats)
-    total_prs = sum(s.pull_requests for s in stats)
-    total_merges = sum(s.merges for s in stats)
-
-    """Update channel names and send repository statistics embeds."""
-    while not discord_bot_instance.ready:
-        await asyncio.sleep(1)
-
-    stats = await gather_repo_stats()
-
-    total_commits = sum(r.commit_count for r in stats)
-    total_prs = sum(r.pr_count for r in stats)
-    total_merges = sum(r.merge_count for r in stats)
-
+    total_commits = sum(
+        getattr(s, "commit_count", getattr(s, "commits", 0)) for s in stats
+    )
+    total_prs = sum(
+        getattr(s, "pr_count", getattr(s, "pull_requests", 0)) for s in stats
+    )
+    total_merges = sum(
+        getattr(s, "merge_count", getattr(s, "merges", 0)) for s in stats
+    )
 
     await discord_bot_instance.update_channel_name(
         settings.channel_commits, f"{total_commits}-commits"
@@ -256,24 +241,20 @@ async def update_statistics() -> None:
     )
 
     for repo in stats:
-        embed = discord.Embed(
+        commit_count = getattr(repo, "commit_count", getattr(repo, "commits", 0))
+        pr_count = getattr(repo, "pr_count", getattr(repo, "pull_requests", 0))
+        merge_count = getattr(repo, "merge_count", getattr(repo, "merges", 0))
 
-            title=repo.name,
-            color=discord.Color.blue(),
+        title = (
+            f"📊 Statistics for {repo.name}"
+            if hasattr(repo, "commit_count")
+            else repo.name
         )
-        embed.add_field(name="Commits", value=str(repo.commits), inline=True)
-        embed.add_field(
-            name="Pull Requests", value=str(repo.pull_requests), inline=True
-        )
-        embed.add_field(name="Merges", value=str(repo.merges), inline=True)
 
-            title=f"📊 Statistics for {repo.name}",
-            color=discord.Color.blue(),
-        )
-        embed.add_field(name="Commits", value=str(repo.commit_count), inline=True)
-        embed.add_field(name="Pull Requests", value=str(repo.pr_count), inline=True)
-        embed.add_field(name="Merges", value=str(repo.merge_count), inline=True)
-
+        embed = discord.Embed(title=title, color=discord.Color.blue())
+        embed.add_field(name="Commits", value=str(commit_count), inline=True)
+        embed.add_field(name="Pull Requests", value=str(pr_count), inline=True)
+        embed.add_field(name="Merges", value=str(merge_count), inline=True)
 
         await send_to_discord(settings.channel_commits, embed=embed)
         await send_to_discord(settings.channel_pull_requests, embed=embed)
