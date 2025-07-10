@@ -24,10 +24,6 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # Discord Channel IDs
-    channel_commits: int = 1392467209162592266
-    channel_pull_requests: int = 1392467228624158730
-    channel_code_merges: int = 1392467252711919666
-
     channel_commits: int = 1392213436720615504
     channel_pull_requests: int = 1392485974398861354
     channel_code_merges: int = 1392213492156727387
@@ -41,9 +37,6 @@ class Settings(BaseSettings):
     channel_ci_builds: int = 1392457950169268334
     channel_gollum: int = 1392213582963540028
     channel_bot_logs: int = 1392213610167664670
-    channel_commits_overview: int = 1392467209162592266
-    channel_pull_requests_overview: int = 1392467228624158730
-    channel_merges_overview: int = 1392467252711919666
 
     # Message retention configuration
     message_retention_days: int = 30
@@ -53,14 +46,7 @@ class Settings(BaseSettings):
     state_directory: str = str(STATE_DIR)
     agent_metadata: dict = AGENT_METADATA
  
+# Environment configuration
     model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
-
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-
-
-
 # Global settings instance
 settings = Settings()
