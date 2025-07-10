@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
 from config import settings
+import formatters
 
 # Setup logging
 setup_logging()
@@ -100,6 +101,30 @@ class DiscordBot:
                     await logs_channel.send(
                         f"❌ Failed to purge channel {channel_id}: {e}"
                     )
+            except Exception:
+                pass
+
+    async def purge_channel(self, channel_id: int) -> None:
+        """Delete **all** messages from the specified channel."""
+        if not self.ready:
+            await self.bot.wait_until_ready()
+
+        try:
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                raise ValueError(f"Channel {channel_id} not found")
+
+            deleted = await channel.purge()
+
+            if channel_id == settings.channel_pull_requests:
+                if deleted:
+                    save_pr_map({})
+        except Exception as e:
+            logger.error(f"Failed to purge channel {channel_id}: {e}")
+            try:
+                logs_channel = self.bot.get_channel(settings.channel_bot_logs)
+                if logs_channel:
+                    await logs_channel.send(f"❌ Failed to purge channel {channel_id}: {e}")
             except Exception:
                 pass
 
@@ -239,3 +264,48 @@ async def send_to_discord(
             )
     else:
         return await discord_bot_instance.send_to_channel(channel_id, content, embed)
+
+
+@bot.command(name="clear")
+async def clear_channels(ctx: commands.Context) -> None:
+    """Clear development-related Discord channels."""
+    channels = [
+        settings.channel_commits,
+        settings.channel_pull_requests,
+        settings.channel_releases,
+        settings.channel_code_merges,
+        settings.channel_ci_builds,
+        settings.channel_deployment_status,
+        settings.channel_gollum,
+    ]
+    for chan in channels:
+        await discord_bot_instance.purge_channel(chan)
+    await ctx.send("Development channels cleared.")
+
+
+@bot.command(name="update")
+async def update_pull_requests(ctx: commands.Context) -> None:
+    """Ensure all active pull requests are listed in the pull requests channel."""
+    from github_api import fetch_open_pull_requests
+
+    pr_map_data = load_pr_map()
+    open_prs = await fetch_open_pull_requests()
+    added = 0
+    for repo, pr in open_prs:
+        key = f"{repo}#{pr.get('number')}"
+        if key in pr_map_data:
+            continue
+        payload = {
+            "action": "opened",
+            "pull_request": pr,
+            "repository": {"full_name": repo},
+        }
+        embed = formatters.format_pull_request_event(payload)
+        message = await send_to_discord(settings.channel_pull_requests, embed=embed)
+        if message:
+            pr_map_data[key] = message.id
+            added += 1
+    if added:
+        save_pr_map(pr_map_data)
+    await ctx.send(f"Added {added} pull request{'s' if added != 1 else ''}.")
+
