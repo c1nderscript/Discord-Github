@@ -56,11 +56,6 @@ class Settings(BaseSettings):
     model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-
-
 
 # Global settings instance
 settings = Settings()
