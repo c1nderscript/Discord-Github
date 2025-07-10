@@ -2,7 +2,13 @@
 
 A webhook router that receives GitHub events and posts rich messages to Discord. It uses FastAPI for the HTTP layer and `discord.py` for interacting with Discord.
 
+
 ## Architecture
+
+Additional setup and troubleshooting details can be found in the [docs directory](docs/README.md).
+
+## How to Re-run the Webhook Script
+
 
 - **`main.py`** – FastAPI application exposing `/github` and `/health` endpoints.
 - **`discord_bot.py`** – Discord client used to send embeds to channels.
@@ -71,7 +77,37 @@ Install the requirements and run:
 pytest -q
 ```
 
+
 ## Documentation
+
+This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
+
+## Clearing Development Channels
+
+To quickly remove **all** messages from the development channels, type:
+
+```bash
+!clear
+```
+
+The command iterates over the configured development channels and purges every message, providing a clean slate for testing.
+
+## Continuous Integration
+
+Automated tests run with GitHub Actions. The workflow defined in
+`.github/workflows/ci.yml` installs Python 3.11, installs the project
+dependencies along with `pytest`, and executes the test suite with
+`pytest -q` for each push and pull request.
+
+## Discord Bot Commands
+
+The bot provides a few convenience commands when interacting directly in Discord.
+
+- `!update` &ndash; Fetch all open pull requests across your repositories and repost them in the pull-requests channel. This is useful if the bot was offline when events occurred.
+- `!clear` &ndash; Remove **all** messages from the main development channels (commits, pull requests, releases, CI builds and code merges).
+
+
+
 
 Additional guides live in the [docs/](docs) folder:
 
