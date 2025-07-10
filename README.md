@@ -1,6 +1,34 @@
 # Discord-Github
 
-FastAPI-based webhook router that forwards GitHub events to Discord channels. This document provides a complete setup guide and instructions for maintaining each component, including GitHub webhooks.
+FastAPI-based webhook router that forwards GitHub events to Discord channels.
+This guide covers basic setup while the [project wiki](https://github.com/your-org/Discord-Github/wiki) contains advanced usage notes.
+
+## Architecture Overview
+
+```mermaid
+graph TD
+    GitHub[GitHub Webhooks]
+    FastAPI[FastAPI Router]
+    Router[Event Router]
+    DiscordBot[discord.py Client]
+    Channels[Discord Channels]
+
+    GitHub --> FastAPI --> Router --> DiscordBot --> Channels
+```
+
+Webhook events arrive via FastAPI, are classified by the router and then sent to
+specific Discord channels using the bot client. See `AGENTS.md` for the detailed
+channel map.
+
+### Discord Channel Routing
+
+The router selects a destination channel based on the GitHub event type. Common
+examples include:
+
+- Push events → `settings.channel_commits`
+- Pull request merges → `settings.channel_code_merges`
+- Other pull request actions → `settings.channel_pull_requests`
+- Unhandled events → `settings.channel_bot_logs`
 
 ## How to Re-run the Webhook Script
 
@@ -47,9 +75,13 @@ The repository includes a GitHub Actions workflow that automatically runs the we
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the bot:
+3. Run the bot directly:
    ```bash
    python run.py
+   ```
+4. Or start it with Docker Compose:
+   ```bash
+   docker-compose up --build -d
    ```
 
 ## Available Routes
@@ -59,45 +91,30 @@ The repository includes a GitHub Actions workflow that automatically runs the we
 
 ### Environment Variables
 
-Set `DISCORD_WEBHOOK_URL` in your `.env` file to the Discord webhook you want to
-use for sending messages. For example:
+Create a `.env` file from `.env.template` and adjust the values for your server.
+The table below summarizes the available settings.
 
-```ini
-DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/your_webhook_id/your_webhook_token/github
-```
-
-You can control how long messages stay in key channels by setting `MESSAGE_RETENTION_DAYS`.
-If not set, messages older than 30 days are removed.
-
-
-The bot posts messages to multiple Discord channels. Override their IDs in `.env` if your server uses different channels:
-
-- `CHANNEL_COMMITS`
-- `CHANNEL_COMMITS_OVERVIEW`
-- `CHANNEL_PULL_REQUESTS`
-- `CHANNEL_PULL_REQUESTS_OVERVIEW`
-- `CHANNEL_CODE_MERGES`
-- `CHANNEL_MERGES_OVERVIEW`
-- `CHANNEL_ISSUES`
-- `CHANNEL_RELEASES`
-- `CHANNEL_DEPLOYMENT_STATUS`
-- `CHANNEL_GOLLUM`
-- `CHANNEL_BOT_LOGS`
-
-The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
-
-```ini
-CHANNEL_COMMITS_OVERVIEW=1392467209162592266
-CHANNEL_PULL_REQUESTS_OVERVIEW=1392467228624158730
-CHANNEL_MERGES_OVERVIEW=1392467252711919666
-```
-
-The bot can also send daily summaries to dedicated overview channels. Add the
-following optional IDs to your `.env`:
-
-- `CHANNEL_COMMITS_OVERVIEW` – daily commit digest channel
-- `CHANNEL_PULL_REQUESTS_OVERVIEW` – pull request overview channel
-- `CHANNEL_MERGES_OVERVIEW` – merge summary channel
+| Variable | Description |
+| --- | --- |
+| `DISCORD_BOT_TOKEN` | Discord bot authentication token |
+| `DISCORD_WEBHOOK_URL` | Default Discord webhook URL |
+| `GITHUB_WEBHOOK_SECRET` | Secret used to verify GitHub payloads |
+| `GITHUB_TOKEN` | Token for GitHub API requests |
+| `GITHUB_USERNAME` | GitHub username for API calls |
+| `WEBHOOK_URL` | Public URL of the `/github` endpoint |
+| `HOST` | Address the server binds to |
+| `PORT` | Port the server listens on |
+| `CHANNEL_COMMITS` | Channel for commit notifications |
+| `CHANNEL_PULL_REQUESTS` | Channel for pull request events |
+| `CHANNEL_CODE_MERGES` | Channel for merged PRs |
+| `CHANNEL_ISSUES` | Channel for issue events |
+| `CHANNEL_RELEASES` | Channel for release events |
+| `CHANNEL_DEPLOYMENT_STATUS` | Channel for deployment status |
+| `CHANNEL_GOLLUM` | Channel for wiki updates |
+| `CHANNEL_BOT_LOGS` | Fallback log channel |
+| `CHANNEL_COMMITS_OVERVIEW` | Optional commit summary channel |
+| `CHANNEL_PULL_REQUESTS_OVERVIEW` | Optional PR summary channel |
+| `CHANNEL_MERGES_OVERVIEW` | Optional merge summary channel |
 
 
 
@@ -165,4 +182,19 @@ manually post embeds for all currently open pull requests across your
 repositories. The command queries the GitHub API using your configured token and
 username, then formats each pull request using the same embed style as webhook
 events.
+
+## Running Tests
+
+Install development dependencies and execute the test suite with `pytest`:
+
+```bash
+pip install -r requirements.txt
+pytest
+```
+
+You can also run the tests inside the Docker container:
+
+```bash
+docker-compose run --rm discord-github-bot pytest
+```
 
