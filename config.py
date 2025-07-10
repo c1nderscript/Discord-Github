@@ -52,14 +52,8 @@ class Settings(BaseSettings):
     logs_directory: str = str(LOGS_DIR)
     state_directory: str = str(STATE_DIR)
     agent_metadata: dict = AGENT_METADATA
- 
+
     model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
-
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-
 
 
 # Global settings instance
