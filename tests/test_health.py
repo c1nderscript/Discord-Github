@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
-import asyncio
 
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -20,9 +19,13 @@ class TestHealthEndpoint(unittest.TestCase):
 
     def test_health_ok(self):
         """Health endpoint returns expected response."""
-        with patch.object(discord_bot_instance, "start", new_callable=AsyncMock), \
-             patch.object(discord_bot_instance, "purge_old_messages", new_callable=AsyncMock), \
-             patch.object(main, "cleanup_pr_messages", new_callable=AsyncMock):
+        with patch.object(
+            discord_bot_instance, "start", new_callable=AsyncMock
+        ), patch.object(
+            discord_bot_instance, "purge_old_messages", new_callable=AsyncMock
+        ), patch.object(
+            main, "cleanup_pr_messages", new_callable=AsyncMock
+        ):
             with TestClient(main.app) as client:
                 response = client.get("/health")
         self.assertEqual(response.status_code, 200)
