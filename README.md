@@ -29,6 +29,8 @@ Use `send_to_discord(channel_id, content=None, embed=None)` to post messages. Th
    ```bash
    pip install -r requirements.txt
    ```
+   This will install packages like `discord.py`, `aiohttp`, and
+   `pydantic-settings` required for running the bot and its tests.
 3. Start the bot:
    ```bash
    python run.py
