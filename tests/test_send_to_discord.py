@@ -32,6 +32,24 @@ class TestSendToDiscord(unittest.TestCase):
             called_embed = call.kwargs["embed"]
             self.assertLessEqual(len(called_embed.fields), 25)
 
+    def test_large_embed_returns_message_list(self):
+        embed = discord.Embed(title="Test")
+        for i in range(30):
+            embed.add_field(name=f"Field{i}", value=str(i), inline=False)
+
+        messages = [MagicMock(), MagicMock()]
+        with patch.object(
+            discord_bot.discord_bot_instance,
+            "send_to_channel",
+            new_callable=AsyncMock,
+            side_effect=messages,
+        ) as mock_send:
+            result = asyncio.run(discord_bot.send_to_discord(123, embed=embed))
+
+        self.assertEqual(mock_send.await_count, 2)
+        self.assertIsInstance(result, list)
+        self.assertEqual(result, messages)
+
 
 if __name__ == "__main__":
     unittest.main()
