@@ -24,6 +24,7 @@ from github_utils import (
 )
 from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
+from utils.embed_utils import split_embed_fields
 
 from formatters import (
     format_push_event,
@@ -121,7 +122,7 @@ async def update_github_stats() -> None:
         embed = discord.Embed(title=title, color=discord.Color.blue())
         for repo, counts in stats.items():
             embed.add_field(name=repo, value=str(counts.get(key, 0)), inline=False)
-        embeds[key] = embed
+        embeds[key] = split_embed_fields(embed)
 
     channel_map = {
         "commits": settings.channel_commits,
@@ -135,22 +136,27 @@ async def update_github_stats() -> None:
             channel_id, f"{totals[key]}-{key.replace('_', '-')}"
         )
 
-        embed = embeds[key]
-        message_id = message_map.get(key)
-        channel = discord_bot_instance.bot.get_channel(channel_id)
-        if message_id and channel:
-            try:
-                message = await channel.fetch_message(message_id)
-                await message.edit(embed=embed)
-                continue
-            except Exception as exc:
-                logger.warning(
-                    f"Failed to edit stats message in {channel_id}: {exc}"
-                )
+        embed_list = embeds[key]
+        if len(embed_list) == 1:
+            embed = embed_list[0]
+            message_id = message_map.get(key)
+            channel = discord_bot_instance.bot.get_channel(channel_id)
+            if message_id and channel:
+                try:
+                    message = await channel.fetch_message(message_id)
+                    await message.edit(embed=embed)
+                    continue
+                except Exception as exc:
+                    logger.warning(
+                        f"Failed to edit stats message in {channel_id}: {exc}"
+                    )
 
-        msg = await send_to_discord(channel_id, embed=embed)
-        if msg:
-            message_map[key] = msg.id
+            msg = await send_to_discord(channel_id, embed=embed)
+            if msg:
+                message_map[key] = msg.id
+        else:
+            for embed in embed_list:
+                await send_to_discord(channel_id, embed=embed)
 
     save_stats_map(message_map)
 
