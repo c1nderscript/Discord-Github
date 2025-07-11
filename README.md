@@ -13,7 +13,7 @@ Additional setup and troubleshooting details can be found in the [docs directory
 - **`main.py`** – FastAPI application exposing `/github` and `/health` endpoints.
 - **`discord_bot.py`** – Discord client used to send embeds to channels.
 - **`run.py`** – simple launcher that runs the app with Uvicorn.
-- **Utilities** – scripts like `add_all_webhooks.py` and `cleanup_pr_messages.py` help manage webhooks and message history.
+- **Utilities** – scripts like `add_all_webhooks.py`, `cleanup.py`, and `pr_cleanup_tool.py` help manage webhooks and message history.
 
 See the [Channel mapping](docs/ChannelMapping.md) document for routing details.
 
