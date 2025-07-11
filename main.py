@@ -12,15 +12,13 @@ from config import settings
 from discord_bot import send_to_discord, discord_bot_instance
 from pull_request_handler import handle_pull_request_event_with_retry
 
-from cleanup import cleanup_pr_messages, periodic_pr_cleanup
+from cleanup import periodic_pr_cleanup
 
 
-from pr_map import load_pr_map, save_pr_map
 from github_utils import (
     verify_github_signature,
     is_github_event_relevant,
     gather_repo_stats,
-    RepoStats,
 )
 from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
