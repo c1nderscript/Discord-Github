@@ -38,7 +38,7 @@ class TestPullRequestHandler(unittest.TestCase):
             "repository": {"full_name": "test/repo"},
         }
         with patch(
-            "pull_request_handler.send_to_discord",
+            "main.send_to_discord",
             new_callable=AsyncMock,
             return_value=message,
         ):

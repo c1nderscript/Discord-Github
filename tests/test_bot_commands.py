@@ -32,17 +32,11 @@ class TestBotCommands(unittest.TestCase):
     def test_clear_channels(self):
         ctx = MagicMock()
         ctx.send = AsyncMock()
-        with patch.object(discord_bot_instance, "purge_channel", new_callable=AsyncMock) as mock_purge:
+        with patch.object(
+            discord_bot_instance, "purge_old_messages", new_callable=AsyncMock
+        ) as mock_purge:
             asyncio.run(clear_channels(ctx))
-            mock_purge.assert_has_awaits([
-                call(settings.channel_commits),
-                call(settings.channel_pull_requests),
-                call(settings.channel_releases),
-                call(settings.channel_code_merges),
-                call(settings.channel_ci_builds),
-                call(settings.channel_deployment_status),
-                call(settings.channel_gollum),
-            ], any_order=True)
+            mock_purge.assert_awaited_once_with(settings.channel_pull_requests, 0)
         ctx.send.assert_called_once()
 
     def test_update_pull_requests(self):

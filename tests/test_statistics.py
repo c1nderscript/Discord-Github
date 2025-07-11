@@ -23,12 +23,15 @@ from github_utils import RepoStats
 
 class TestUpdateStatistics(unittest.TestCase):
     def test_update_statistics(self):
+        import importlib
+        importlib.reload(main)
+
         repo_stats = [
             RepoStats(name="user/repo1", commit_count=5, pr_count=2, merge_count=1),
             RepoStats(name="user/repo2", commit_count=3, pr_count=4, merge_count=2),
         ]
         with patch("main.gather_repo_stats", new_callable=AsyncMock, return_value=repo_stats), \
-             patch.object(discord_bot_instance, "update_channel_name", new_callable=AsyncMock) as mock_rename, \
+             patch("discord_bot.discord_bot_instance.update_channel_name", new_callable=AsyncMock) as mock_rename, \
              patch("main.send_to_discord", new_callable=AsyncMock) as mock_send:
             discord_bot_instance.ready = True
             asyncio.run(main.update_statistics())

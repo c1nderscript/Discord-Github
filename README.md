@@ -162,15 +162,15 @@ pytest -q
 
 This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
 
-## Clearing Development Channels
+## Clearing the Pull Requests Channel
 
-To quickly remove **all** messages from the development channels, type:
+To quickly remove **all** messages from the pull requests channel, type:
 
 ```bash
 !clear
 ```
 
-The command iterates over the configured development channels and purges every message, providing a clean slate for testing.
+The command purges the configured pull requests channel and clears the PR map so the list can be repopulated.
 
 ## Continuous Integration
 
@@ -183,8 +183,8 @@ dependencies along with `pytest`, and executes the test suite with
 
 The bot provides a few convenience commands when interacting directly in Discord.
 
-- `!update` &ndash; Fetch all open pull requests across your repositories and repost them in the pull-requests channel. This is useful if the bot was offline when events occurred.
-- `!clear` &ndash; Remove **all** messages from the main development channels (commits, pull requests, releases, CI builds and code merges).
+- `!update` (alias `!pr`) &ndash; Fetch all open pull requests across your repositories and repost them in the pull-requests channel. This is useful if the bot was offline when events occurred.
+- `!clear` &ndash; Remove all messages from the pull-requests channel.
 - `!setup` &ndash; Create missing channels automatically so the bot can operate in a new server.
 
 

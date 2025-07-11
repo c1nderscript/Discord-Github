@@ -56,11 +56,29 @@ async def health() -> JSONResponse:
 
 async def update_github_stats() -> None:
     """Update Discord overview channels with GitHub statistics."""
+    stats: dict[str, dict[str, int]] = {}
     try:
         stats = await fetch_repo_stats()
     except Exception as exc:
         logger.error(f"Failed to fetch repo stats: {exc}")
-        return
+
+    if not stats or all(
+        sum(repo.get(key, 0) for repo in stats.values()) == 0
+        for key in ("pull_requests", "merges")
+    ):
+        try:
+            repo_stats = await gather_repo_stats()
+            stats = {
+                r.name: {
+                    "commits": r.commit_count,
+                    "pull_requests": r.pr_count,
+                    "merges": r.merge_count,
+                }
+                for r in repo_stats
+            }
+        except Exception as exc:  # pragma: no cover - network failure
+            logger.error(f"Failed to gather repo stats: {exc}")
+            return
 
     totals = {"commits": 0, "pull_requests": 0, "merges": 0}
     for counts in stats.values():
