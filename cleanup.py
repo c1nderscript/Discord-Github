@@ -1,3 +1,11 @@
+"""Remove Discord messages for pull requests that are no longer open.
+
+`cleanup_pr_messages` checks each tracked pull request against GitHub and
+deletes the associated Discord message when the PR has been closed or
+merged.  `periodic_pr_cleanup` can be scheduled to run this task on a
+fixed interval.
+"""
+
 import asyncio
 import logging
 from typing import Dict
