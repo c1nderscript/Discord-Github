@@ -12,7 +12,6 @@ os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
 import pr_map
 import pull_request_handler
-from config import settings
 
 
 class TestPullRequestHandler(unittest.TestCase):
@@ -58,8 +57,9 @@ class TestPullRequestHandler(unittest.TestCase):
 
         with patch(
             "pull_request_handler.process_pull_request_event",
+            new_callable=AsyncMock,
             side_effect=side_effect,
-        ) as proc, patch("asyncio.sleep", new_callable=AsyncMock) as sleep:
+        ) as proc, patch("asyncio.sleep", new_callable=AsyncMock, return_value=None) as sleep:
             result = asyncio.run(
                 pull_request_handler.handle_pull_request_event_with_retry({}, retries=2, delay=0)
             )
@@ -72,8 +72,10 @@ class TestPullRequestHandler(unittest.TestCase):
             raise RuntimeError("fail")
 
         with patch(
-            "pull_request_handler.process_pull_request_event", side_effect=fail
-        ) as proc, patch("asyncio.sleep", new_callable=AsyncMock) as sleep:
+            "pull_request_handler.process_pull_request_event",
+            new_callable=AsyncMock,
+            side_effect=fail,
+        ) as proc, patch("asyncio.sleep", new_callable=AsyncMock, return_value=None) as sleep:
             result = asyncio.run(
                 pull_request_handler.handle_pull_request_event_with_retry({}, retries=2, delay=0)
             )
