@@ -13,7 +13,7 @@ Additional setup and troubleshooting details can be found in the [docs directory
 - **`main.py`** – FastAPI application exposing `/github` and `/health` endpoints.
 - **`discord_bot.py`** – Discord client used to send embeds to channels.
 - **`run.py`** – simple launcher that runs the app with Uvicorn.
-- **Utilities** – scripts like `add_all_webhooks.py` and `cleanup_pr_messages.py` help manage webhooks and message history. Closed pull request messages are cleaned up automatically by the `periodic_pr_cleanup` task at the interval set by `PR_CLEANUP_INTERVAL_MINUTES` (see `cleanup.py`).
+  - **Utilities** – scripts like `add_all_webhooks.py` and `cleanup_pr_messages.py` help manage webhooks and message history. `add_all_webhooks.py` now runs asynchronously (invoke with `python add_all_webhooks.py`). Closed pull request messages are cleaned up automatically by the `periodic_pr_cleanup` task at the interval set by `PR_CLEANUP_INTERVAL_MINUTES` (see `cleanup.py`).
 - **`send_to_discord` helper** – automatically splits embeds over 25 fields using `split_embed_fields`.
 
 See the [Channel mapping](docs/ChannelMapping.md) document for routing details.

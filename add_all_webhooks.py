@@ -17,9 +17,10 @@ Environment variables required:
 """
 
 import os
-import requests
-import time
+import asyncio
 from typing import List
+
+import aiohttp
 
 # Try to load environment variables from .env file
 try:
@@ -49,10 +50,8 @@ if not WEBHOOK_SECRET:
     exit(1)
 
 
-def get_all_repositories() -> List[str]:
-    """
-    Get all repositories for the user from GitHub API (including private ones).
-    """
+async def get_all_repositories(session: aiohttp.ClientSession) -> List[str]:
+    """Get all repositories for the user from GitHub API (including private ones)."""
     url = "https://api.github.com/user/repos"  # Use /user/repos for authenticated user
 
     headers = {
@@ -63,27 +62,24 @@ def get_all_repositories() -> List[str]:
     params = {"per_page": 100, "visibility": "all", "affiliation": "owner"}
 
     try:
-        response = requests.get(url, headers=headers, params=params)
-
-        if response.status_code == 200:
-            repos = response.json()
-            repo_names = [repo["name"] for repo in repos]
-            print(f"Found {len(repo_names)} repositories")
-            return repo_names
-        else:
-            print(f"Error fetching repositories: {response.status_code}")
-            print(f"Response: {response.text}")
-            return []
-
+        async with session.get(url, headers=headers, params=params) as response:
+            if response.status == 200:
+                repos = await response.json()
+                repo_names = [repo["name"] for repo in repos]
+                print(f"Found {len(repo_names)} repositories")
+                return repo_names
+            else:
+                print(f"Error fetching repositories: {response.status}")
+                text = await response.text()
+                print(f"Response: {text}")
+                return []
     except Exception as e:
         print(f"Error fetching repositories: {str(e)}")
         return []
 
 
-def add_webhook_to_repo(repo_name: str) -> bool:
-    """
-    Add a webhook to a specific repository.
-    """
+async def add_webhook_to_repo(session: aiohttp.ClientSession, repo_name: str) -> str:
+    """Add a webhook to a specific repository."""
     url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{repo_name}/hooks"
 
     headers = {
@@ -105,70 +101,65 @@ def add_webhook_to_repo(repo_name: str) -> bool:
     }
 
     try:
-        response = requests.post(url, headers=headers, json=webhook_data)
-
-        if response.status_code == 201:
-            print(f"✅ Successfully added webhook to {repo_name}")
-            return True
-        elif response.status_code == 422:
-            # Webhook might already exist
-            print(f"⚠️  Webhook might already exist for {repo_name} (422 error)")
-            return False
-        else:
-            print(f"❌ Failed to add webhook to {repo_name}: {response.status_code}")
-            print(f"Response: {response.text}")
-            return False
-
+        async with session.post(url, headers=headers, json=webhook_data) as response:
+            if response.status == 201:
+                print(f"✅ Successfully added webhook to {repo_name}")
+                return "added"
+            elif response.status == 422:
+                print(f"⚠️  Webhook might already exist for {repo_name} (422 error)")
+                return "exists"
+            else:
+                print(f"❌ Failed to add webhook to {repo_name}: {response.status}")
+                text = await response.text()
+                print(f"Response: {text}")
+                return "error"
     except Exception as e:
         print(f"❌ Error adding webhook to {repo_name}: {str(e)}")
-        return False
+        return "error"
 
 
-def main():
-    """
-    Main function to add webhooks to all repositories.
-    """
+async def main() -> None:
+    """Main coroutine to add webhooks to all repositories."""
     print("🔍 Fetching all repositories...")
-    repositories = get_all_repositories()
+    async with aiohttp.ClientSession() as session:
+        repositories = await get_all_repositories(session)
 
-    if not repositories:
-        print("❌ No repositories found or error occurred")
-        return
+        if not repositories:
+            print("❌ No repositories found or error occurred")
+            return
 
-    print(f"🚀 Adding GitHub webhooks to {len(repositories)} repositories...")
-    print(f"📡 Webhook URL: {WEBHOOK_URL}")
-    print("-" * 50)
+        print(f"🚀 Adding GitHub webhooks to {len(repositories)} repositories...")
+        print(f"📡 Webhook URL: {WEBHOOK_URL}")
+        print("-" * 50)
 
-    success_count = 0
-    failed_repos = []
-    existing_webhooks = 0
+        success_count = 0
+        failed_repos = []
+        existing_webhooks = 0
 
-    for repo in repositories:
-        result = add_webhook_to_repo(repo)
-        if result:
-            success_count += 1
-        else:
-            # Check if it's an existing webhook (422 error)
-            if "already exist" in str(result):
+        for repo in repositories:
+            result = await add_webhook_to_repo(session, repo)
+            if result == "added":
+                success_count += 1
+            elif result == "exists":
                 existing_webhooks += 1
             else:
                 failed_repos.append(repo)
 
-        # Add a small delay to avoid rate limiting
-        time.sleep(1)
+            # Add a small delay to avoid rate limiting
+            await asyncio.sleep(1)
 
-    print("-" * 50)
-    print("📊 Summary:")
-    print(f"✅ Successfully added: {success_count}")
-    print(f"⚠️  Already existed: {existing_webhooks}")
-    print(f"❌ Failed: {len(failed_repos)}")
-    print(f"📦 Total repositories: {len(repositories)}")
+        print("-" * 50)
+        print("📊 Summary:")
+        print(f"✅ Successfully added: {success_count}")
+        print(f"⚠️  Already existed: {existing_webhooks}")
+        print(f"❌ Failed: {len(failed_repos)}")
+        print(f"📦 Total repositories: {len(repositories)}")
 
-    if failed_repos:
-        print(f"Failed repositories: {', '.join(failed_repos)}")
+        if failed_repos:
+            print(f"Failed repositories: {', '.join(failed_repos)}")
 
-    print("\n🎉 Webhook setup complete!")
+        print("\n🎉 Webhook setup complete!")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
