@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     # Cleanup interval in minutes for resolved pull requests
     pr_cleanup_interval_minutes: int = 60
 
+    # Interval in minutes for updating overview statistics
+    stats_update_interval_minutes: int = 60
+
+    # Interval in minutes for updating the pull request count
+    pr_count_update_interval_minutes: int = 1
+
     # Agent compliance paths
     logs_directory: str = str(LOGS_DIR)
     state_directory: str = str(STATE_DIR)

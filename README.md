@@ -69,6 +69,8 @@ The bot posts messages to multiple Discord channels. Override their IDs in `.env
 - `CHANNEL_GOLLUM`
 - `CHANNEL_BOT_LOGS`
 - `PR_CLEANUP_INTERVAL_MINUTES`
+- `STATS_UPDATE_INTERVAL_MINUTES`
+- `PR_COUNT_UPDATE_INTERVAL_MINUTES`
 
 The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
 
@@ -134,9 +136,13 @@ be customised if your Discord server uses different IDs.
 | `CHANNEL_PULL_REQUESTS_OVERVIEW` | Optional overview channel for PRs |
 | `CHANNEL_MERGES_OVERVIEW` | Optional overview channel for merges |
 | `PR_CLEANUP_INTERVAL_MINUTES` | Interval (minutes) between checks for resolved PRs |
+| `STATS_UPDATE_INTERVAL_MINUTES` | Interval (minutes) between overview stats updates |
+| `PR_COUNT_UPDATE_INTERVAL_MINUTES` | Interval (minutes) between pull request count updates |
 
 `MESSAGE_RETENTION_DAYS` can be set to automatically prune older messages (default `30`).
 `PR_CLEANUP_INTERVAL_MINUTES` controls how often the bot checks for resolved pull requests (default `60`).
+`STATS_UPDATE_INTERVAL_MINUTES` sets how often the bot refreshes overview statistics (default `60`).
+`PR_COUNT_UPDATE_INTERVAL_MINUTES` sets how often the pull request channel name is updated (default `1`).
 
 ## Docker
 

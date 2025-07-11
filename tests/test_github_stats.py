@@ -39,9 +39,9 @@ class TestGithubStats(unittest.TestCase):
             asyncio.run(main.update_github_stats())
 
         mock_rename.assert_has_awaits([
-            call(settings.channel_commits, "8-commits"),
-            call(settings.channel_pull_requests, "3-pull-requests"),
-            call(settings.channel_code_merges, "1-merges"),
+            call(settings.channel_commits_overview, "8-commits"),
+            call(settings.channel_pull_requests_overview, "3-pull-requests"),
+            call(settings.channel_merges_overview, "1-merges"),
         ], any_order=True)
         self.assertEqual(mock_send.await_count, 3)
         data = stats_map.load_stats_map()
