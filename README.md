@@ -38,6 +38,10 @@ For a quicker start you can run the helper script:
 It installs all dependencies inside `.venv` and copies `.env.template` to `.env`
 if needed. See **AGENTS.md** for guidelines on keeping this script current.
 
+Embeds with more than 25 fields are automatically split into multiple messages
+when sent. In this case `send_to_discord()` returns a list of
+`discord.Message` objects representing each embed chunk.
+
 ### Environment Variables
 
 

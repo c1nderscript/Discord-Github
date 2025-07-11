@@ -206,7 +206,12 @@ class DiscordBot:
     async def send_to_channel(
         self, channel_id: int, content: str = None, embed: discord.Embed = None
     ) -> Optional[discord.Message]:
-        """Send a message to a specific Discord channel and return the sent message."""
+        """Send a message to a specific Discord channel and return the sent message.
+
+        If ``embed`` contains more than 25 fields it will be split into multiple
+        embeds using :func:`utils.embed_utils.split_embed_fields` and each chunk
+        will be sent individually. The final :class:`discord.Message` is returned.
+        """
         if not self.ready:
             await self.bot.wait_until_ready()
 
@@ -222,11 +227,15 @@ class DiscordBot:
                     )
                 return
 
-            if embed:
-                message = await channel.send(embed=embed)
-            else:
-                message = await channel.send(content)
-            return message
+            messages: List[discord.Message] = []
+            embed_chunks = split_embed_fields(embed) if embed else [None]
+
+            for index, chunk in enumerate(embed_chunks):
+                msg_content = content if index == 0 else None
+                message = await channel.send(content=msg_content, embed=chunk)
+                messages.append(message)
+
+            return messages[-1] if messages else None
 
         except Exception as e:
             logger.error(f"Failed to send message to channel {channel_id}: {e}")
@@ -279,7 +288,9 @@ async def send_to_discord(
 ):
     """Global function to send messages to Discord.
 
-    Splits embeds exceeding Discord's 25 field limit into multiple messages.
+    Splits embeds exceeding Discord's 25 field limit into multiple messages and
+    returns either the single :class:`discord.Message` sent or a list of messages
+    when multiple embeds are dispatched.
     """
 
     embed_chunks: List[discord.Embed]
@@ -288,7 +299,7 @@ async def send_to_discord(
     else:
         embed_chunks = [None]
 
-    last_message = None
+    messages: List[discord.Message] = []
     for index, chunk in enumerate(embed_chunks):
         msg_content = content if index == 0 else None
         if use_webhook:
@@ -298,19 +309,27 @@ async def send_to_discord(
                     webhook_url, msg_content, chunk
                 )
             else:
-                last_message = await discord_bot_instance.send_to_channel(
+                message = await discord_bot_instance.send_to_channel(
                     channel_id,
                     content=msg_content,
                     embed=chunk,
                 )
+                if message:
+                    messages.append(message)
         else:
-            last_message = await discord_bot_instance.send_to_channel(
+            message = await discord_bot_instance.send_to_channel(
                 channel_id,
                 content=msg_content,
                 embed=chunk,
             )
+            if message:
+                messages.append(message)
 
-    return last_message
+    if not messages:
+        return None
+    if len(messages) == 1:
+        return messages[0]
+    return messages
 
 
 # Duplicate clear command and function removed to fix CommandRegistrationError
