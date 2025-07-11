@@ -8,6 +8,8 @@ from config import settings
 from discord_bot import discord_bot_instance
 from pr_map import load_pr_map, save_pr_map
 
+__all__ = ["cleanup_pr_messages", "periodic_pr_cleanup"]
+
 logger = logging.getLogger(__name__)
 GITHUB_API_BASE = "https://api.github.com"
 
