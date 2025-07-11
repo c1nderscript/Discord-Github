@@ -25,13 +25,6 @@ class TestBotCommands(unittest.TestCase):
         self.ctx.send = AsyncMock()
 
     def test_clear_command(self):
-        channels = [
-            settings.channel_commits,
-            settings.channel_pull_requests,
-            settings.channel_releases,
-            settings.channel_ci_builds,
-            settings.channel_code_merges,
-        ]
         with patch.object(
             discord_bot.discord_bot_instance,
             "purge_old_messages",
@@ -39,7 +32,7 @@ class TestBotCommands(unittest.TestCase):
         ) as mock_purge:
             asyncio.run(discord_bot.clear(self.ctx))
 
-        mock_purge.assert_has_awaits([call(ch, 0) for ch in channels], any_order=True)
+        mock_purge.assert_awaited_once_with(settings.channel_pull_requests, 0)
         self.ctx.send.assert_awaited_once()
 
     def test_update_command(self):
@@ -94,8 +87,13 @@ class TestUpdateCommand(unittest.TestCase):
             "formatters.format_pull_request_event", side_effect=[embed1, embed2]
         ) as mock_fmt, patch(
             "discord_bot.send_to_discord", new_callable=AsyncMock
-        ) as mock_send:
+        ) as mock_send, patch(
+            "discord_bot.load_pr_map", return_value={}
+        ), patch(
+            "discord_bot.save_pr_map"
+        ):
             ctx = MagicMock()
+            ctx.send = AsyncMock()
             asyncio.run(discord_bot.update_pull_requests.callback(ctx))
 
         mock_fetch.assert_awaited_once()

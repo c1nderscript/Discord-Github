@@ -34,7 +34,7 @@ class MockSession:
     def __init__(self, responses):
         self._responses = responses
 
-    def get(self, url, headers=None):
+    def get(self, url, headers=None, params=None):
         return self._responses.pop(0)
 
     async def __aenter__(self):
@@ -53,12 +53,13 @@ class TestFetchRepoStats(unittest.TestCase):
     def test_fetch_repo_stats_success(self):
         responses = [
             MockResp(200, [{"full_name": "alice/repo1"}, {"full_name": "alice/repo2"}]),
-            MockResp(200, [], {"Link": "<x?page=5>; rel=\"last\""}),
-            MockResp(200, [], {"Link": "<x?page=3>; rel=\"last\""}),
-            MockResp(200, {"total_count": 2}),
-            MockResp(200, [], {"Link": "<x?page=10>; rel=\"last\""}),
-            MockResp(200, [], {"Link": "<x?page=7>; rel=\"last\""}),
-            MockResp(200, {"total_count": 4}),
+            MockResp(200, []),  # end repo pages
+            MockResp(200, {"total_count": 5}),  # commits repo1
+            MockResp(200, {"total_count": 3}),  # PRs repo1
+            MockResp(200, {"total_count": 2}),  # merged PRs repo1
+            MockResp(200, {"total_count": 10}),  # commits repo2
+            MockResp(200, {"total_count": 7}),  # PRs repo2
+            MockResp(200, {"total_count": 4}),  # merged PRs repo2
         ]
         mock_session = MockSession(responses)
         with mock.patch("github_utils.aiohttp.ClientSession", return_value=mock_session):
@@ -74,9 +75,10 @@ class TestFetchRepoStats(unittest.TestCase):
     def test_fetch_repo_stats_missing_data(self):
         responses = [
             MockResp(200, [{"full_name": "alice/repo1"}]),
-            MockResp(404),
             MockResp(200, []),
-            MockResp(200, {"total_count": 0}),
+            MockResp(404),  # commits failed
+            MockResp(200, {"total_count": 1}),  # PRs
+            MockResp(200, {"total_count": 0}),  # merged PRs
         ]
         mock_session = MockSession(responses)
         with mock.patch("github_utils.aiohttp.ClientSession", return_value=mock_session):
