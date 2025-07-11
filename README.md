@@ -155,9 +155,17 @@ Traefik configuration is included via `traefik.yml`.
 
 ## Tests
 
-Install the requirements and run:
+The test suite runs inside the Python virtual environment created by
+`setup.sh`. If you haven't run the script yet, execute:
 
 ```bash
+./setup.sh
+```
+
+Then activate the environment and run `pytest`:
+
+```bash
+source .venv/bin/activate
 pytest -q
 ```
 
