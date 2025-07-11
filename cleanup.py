@@ -66,3 +66,13 @@ async def cleanup_pr_messages() -> None:
 
     save_pr_map(pr_map_data)
     logger.info(f"Removed {len(closed_keys)} closed pull request messages")
+
+
+async def periodic_pr_cleanup(interval_minutes: int) -> None:
+    """Run PR cleanup on a fixed schedule."""
+    while True:
+        try:
+            await cleanup_pr_messages()
+        except Exception as exc:  # pragma: no cover - unexpected runtime failure
+            logger.error("PR cleanup failed: %s", exc)
+        await asyncio.sleep(interval_minutes * 60)

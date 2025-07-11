@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     # Message retention configuration
     message_retention_days: int = 30
 
+    # Cleanup interval in minutes for resolved pull requests
+    pr_cleanup_interval_minutes: int = 60
+
     # Agent compliance paths
     logs_directory: str = str(LOGS_DIR)
     state_directory: str = str(STATE_DIR)
