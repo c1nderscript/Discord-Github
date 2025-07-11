@@ -12,6 +12,8 @@ from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
 from config import settings
 
+from utils.embed_utils import split_embed_fields
+
 from github_api import fetch_open_pull_requests
 from formatters import format_pull_request_event
 from commands.setup import setup_channels
@@ -275,20 +277,40 @@ async def send_to_discord(
     embed: discord.Embed = None,
     use_webhook: bool = False,
 ):
-    """Global function to send messages to Discord."""
-    if use_webhook:
-        # Use webhook URL from environment variable or settings
-        webhook_url = getattr(settings, "discord_webhook_url", None)
-        if webhook_url:
-            await discord_bot_instance.send_to_webhook(webhook_url, content, embed)
+    """Global function to send messages to Discord.
+
+    Splits embeds exceeding Discord's 25 field limit into multiple messages.
+    """
+
+    embed_chunks: List[discord.Embed]
+    if embed is not None:
+        embed_chunks = split_embed_fields(embed)
+    else:
+        embed_chunks = [None]
+
+    last_message = None
+    for index, chunk in enumerate(embed_chunks):
+        msg_content = content if index == 0 else None
+        if use_webhook:
+            webhook_url = getattr(settings, "discord_webhook_url", None)
+            if webhook_url:
+                await discord_bot_instance.send_to_webhook(
+                    webhook_url, msg_content, chunk
+                )
+            else:
+                last_message = await discord_bot_instance.send_to_channel(
+                    channel_id,
+                    content=msg_content,
+                    embed=chunk,
+                )
         else:
-            # Fallback to channel send if no webhook URL configured
-            return await discord_bot_instance.send_to_channel(
-                channel_id, content, embed
+            last_message = await discord_bot_instance.send_to_channel(
+                channel_id,
+                content=msg_content,
+                embed=chunk,
             )
 
-    else:
-        return await discord_bot_instance.send_to_channel(channel_id, content, embed)
+    return last_message
 
 
 # Duplicate clear command and function removed to fix CommandRegistrationError
