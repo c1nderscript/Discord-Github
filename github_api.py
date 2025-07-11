@@ -1,3 +1,11 @@
+"""Asynchronous helpers for interacting with the GitHub REST API.
+
+The module currently exposes :func:`fetch_open_pull_requests` which
+gathers open pull requests across all repositories returned by
+``fetch_repo_stats``.  Requests include the optional GitHub token from
+the configuration and failures are logged per repository.
+"""
+
 import logging
 from typing import Dict, List, Tuple
 import aiohttp

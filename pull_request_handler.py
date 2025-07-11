@@ -1,3 +1,12 @@
+"""Process `pull_request` webhook events and manage Discord messages.
+
+The handler formats pull request payloads into Discord embeds, posts them
+to the appropriate channel, tracks message IDs for later updates, and
+removes messages when pull requests are closed.  A retry wrapper is
+provided via :func:`handle_pull_request_event_with_retry` to improve
+resilience.
+"""
+
 import asyncio
 import logging
 from typing import Any, Dict
