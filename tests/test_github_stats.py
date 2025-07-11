@@ -46,10 +46,35 @@ class TestGithubStats(unittest.TestCase):
         self.assertEqual(mock_send.await_count, 3)
         data = stats_map.load_stats_map()
         self.assertEqual(data, {
-            "commits": 42,
-            "pull_requests": 42,
-            "merges": 42,
+            "commits": [42],
+            "pull_requests": [42],
+            "merges": [42],
         })
+
+    def test_update_github_stats_split_embeds(self):
+        sample_stats = {
+            f"repo{i}": {"commits": i, "pull_requests": i, "merges": i}
+            for i in range(30)
+        }
+
+        message = MagicMock()
+        message.id = 99
+
+        with patch(
+            "main.fetch_repo_stats", new_callable=AsyncMock, return_value=sample_stats
+        ), patch(
+            "discord_bot.discord_bot_instance.update_channel_name",
+            new_callable=AsyncMock,
+        ) as mock_rename, patch(
+            "main.send_to_discord", new_callable=AsyncMock, return_value=message
+        ) as mock_send:
+            asyncio.run(main.update_github_stats())
+
+        # With 30 repos and max 25 fields per embed we expect 2 embeds per channel
+        self.assertEqual(mock_send.await_count, 6)
+        data = stats_map.load_stats_map()
+        for key in ("commits", "pull_requests", "merges"):
+            self.assertEqual(data[key], [99, 99])
 
 
 if __name__ == "__main__":

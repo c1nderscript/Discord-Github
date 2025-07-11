@@ -112,16 +112,25 @@ async def update_github_stats() -> None:
         for key in totals:
             totals[key] += counts.get(key, 0)
 
-    embeds = {}
+    embeds: dict[str, list[discord.Embed]] = {}
     for key, title in [
         ("commits", "Commit Counts"),
         ("pull_requests", "Pull Request Counts"),
         ("merges", "Merge Counts"),
     ]:
+        embed_list: list[discord.Embed] = []
         embed = discord.Embed(title=title, color=discord.Color.blue())
+        field_count = 0
         for repo, counts in stats.items():
             embed.add_field(name=repo, value=str(counts.get(key, 0)), inline=False)
-        embeds[key] = embed
+            field_count += 1
+            if field_count == 25:
+                embed_list.append(embed)
+                embed = discord.Embed(title=title, color=discord.Color.blue())
+                field_count = 0
+        if field_count > 0 or not embed_list:
+            embed_list.append(embed)
+        embeds[key] = embed_list
 
     channel_map = {
         "commits": settings.channel_commits,
@@ -135,22 +144,31 @@ async def update_github_stats() -> None:
             channel_id, f"{totals[key]}-{key.replace('_', '-')}"
         )
 
-        embed = embeds[key]
-        message_id = message_map.get(key)
-        channel = discord_bot_instance.bot.get_channel(channel_id)
-        if message_id and channel:
-            try:
-                message = await channel.fetch_message(message_id)
-                await message.edit(embed=embed)
-                continue
-            except Exception as exc:
-                logger.warning(
-                    f"Failed to edit stats message in {channel_id}: {exc}"
-                )
+        embed_list = embeds[key]
+        message_ids = message_map.get(key, [])
+        if isinstance(message_ids, int):
+            message_ids = [message_ids]
 
-        msg = await send_to_discord(channel_id, embed=embed)
-        if msg:
-            message_map[key] = msg.id
+        channel = discord_bot_instance.bot.get_channel(channel_id)
+        new_ids: list[int] = []
+        for idx, embed in enumerate(embed_list):
+            msg_id = message_ids[idx] if idx < len(message_ids) else None
+            if msg_id and channel:
+                try:
+                    message = await channel.fetch_message(msg_id)
+                    await message.edit(embed=embed)
+                    new_ids.append(msg_id)
+                    continue
+                except Exception as exc:
+                    logger.warning(
+                        f"Failed to edit stats message in {channel_id}: {exc}"
+                    )
+
+            msg = await send_to_discord(channel_id, embed=embed)
+            if msg:
+                new_ids.append(msg.id)
+
+        message_map[key] = new_ids
 
     save_stats_map(message_map)
 
