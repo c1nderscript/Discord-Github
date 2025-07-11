@@ -302,27 +302,9 @@ async def send_to_discord(
         return await discord_bot_instance.send_to_channel(channel_id, content, embed)
 
 
-@bot.command(name="clear")
-async def clear(ctx: commands.Context) -> None:
-    """Clear development-related channels using message purge."""
-    channels = [
-        settings.channel_commits,
-        settings.channel_pull_requests,
-        settings.channel_releases,
-        settings.channel_ci_builds,
-        settings.channel_code_merges,
-    ]
-    await asyncio.gather(
-        *(discord_bot_instance.purge_old_messages(ch, 0) for ch in channels)
-    )
-    await ctx.send("Development channels cleared.")
-
-
-async def clear_channels(ctx: commands.Context) -> None:
-    """Completely purge all development channels."""
-    for channel_id in DEV_CHANNELS:
-        await discord_bot_instance.purge_channel(channel_id)
-    await ctx.send("✅ Channels cleared.")
+# Duplicate clear command and function removed to fix CommandRegistrationError
+# The original clear_channels function with @bot.command(name="clear") decorator
+# is already defined above and handles channel clearing
 
 
 
