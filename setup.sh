@@ -15,6 +15,9 @@ source .venv/bin/activate
 
 # Upgrade pip and install Python dependencies
 python -m pip install --upgrade pip
+# The tests depend on packages such as discord.py, so install everything
+# from requirements.txt.
+echo "Installing packages from requirements.txt..."
 python -m pip install -r requirements.txt
 python -m pip install pytest
 
