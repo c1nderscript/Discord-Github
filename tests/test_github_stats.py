@@ -46,9 +46,30 @@ class TestGithubStats(unittest.TestCase):
         self.assertEqual(mock_send.await_count, 3)
         data = stats_map.load_stats_map()
         self.assertEqual(data, {
-            "commits": 42,
-            "pull_requests": 42,
-            "merges": 42,
+            "commits": [42],
+            "pull_requests": [42],
+            "merges": [42],
+        })
+
+    def test_update_github_stats_split(self):
+        sample_stats = {
+            f"repo{i}": {"commits": i, "pull_requests": i, "merges": i} for i in range(30)
+        }
+
+        message = MagicMock()
+        message.id = 7
+
+        with patch("main.fetch_repo_stats", new_callable=AsyncMock, return_value=sample_stats), \
+             patch("discord_bot.discord_bot_instance.update_channel_name", new_callable=AsyncMock), \
+             patch("main.send_to_discord", new_callable=AsyncMock, return_value=message) as mock_send:
+            asyncio.run(main.update_github_stats())
+
+        self.assertEqual(mock_send.await_count, 6)
+        data = stats_map.load_stats_map()
+        self.assertEqual(data, {
+            "commits": [7, 7],
+            "pull_requests": [7, 7],
+            "merges": [7, 7],
         })
 
 
