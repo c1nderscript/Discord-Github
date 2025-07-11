@@ -17,7 +17,6 @@ class Settings(BaseSettings):
     github_webhook_secret: Optional[str] = None
     github_token: Optional[str] = None
     github_username: Optional[str] = None
-    webhook_url: Optional[str] = None
 
     # Server Configuration
     host: str = "0.0.0.0"

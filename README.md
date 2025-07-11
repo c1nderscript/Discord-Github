@@ -85,7 +85,6 @@ DISCORD_WEBHOOK_URL=https://discordapp.com/api/webhooks/...
 GITHUB_WEBHOOK_SECRET=secret
 GITHUB_TOKEN=token
 GITHUB_USERNAME=username
-WEBHOOK_URL=http://your-server/github
 
 # Server settings
 HOST=0.0.0.0
@@ -119,7 +118,6 @@ be customised if your Discord server uses different IDs.
 | `GITHUB_WEBHOOK_SECRET` | Secret used to validate GitHub webhooks |
 | `GITHUB_TOKEN` | Personal access token for GitHub API calls |
 | `GITHUB_USERNAME` | GitHub username used by helper scripts |
-| `WEBHOOK_URL` | Base webhook URL when creating webhooks |
 | `HOST` | Bind address for the FastAPI server |
 | `PORT` | Listening port for the FastAPI server |
 | `CHANNEL_COMMITS` | Channel for push events |
