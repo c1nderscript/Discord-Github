@@ -180,7 +180,6 @@ class DiscordBot:
     ):
 
         """Send a message to a Discord webhook URL."""
-        import aiohttp
 
         headers = {"Content-Type": "application/json"}
         data = {}
