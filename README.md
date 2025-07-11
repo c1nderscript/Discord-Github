@@ -155,7 +155,15 @@ Traefik configuration is included via `traefik.yml`.
 
 ## Tests
 
-Install the requirements and run:
+Before running the tests, execute the setup script so the environment has all
+required packages installed:
+
+```bash
+./setup.sh
+```
+
+This installs everything from `requirements.txt` &ndash; including `discord.py`,
+`aiohttp`, and `httpx` &ndash; inside `.venv`. Once setup is complete, run:
 
 ```bash
 pytest -q
