@@ -16,6 +16,7 @@ source .venv/bin/activate
 # Upgrade pip and install Python dependencies
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+python -m pip install discord.py aiohttp pydantic-settings
 python -m pip install pytest
 
 # Create a default .env if none exists
