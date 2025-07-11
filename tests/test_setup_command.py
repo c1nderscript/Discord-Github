@@ -18,10 +18,15 @@ class TestSetupCommand(unittest.TestCase):
         ctx.send = AsyncMock()
         guild = MagicMock()
         ctx.guild = guild
-        with patch("utils.channel_manager.ensure_channels", new_callable=AsyncMock) as mock_ensure:
+        with patch("commands.setup.ensure_channels", new_callable=AsyncMock) as mock_ensure:
             mock_ensure.return_value = {"Bot Operations": {"bot-logs": 1}}
+            update_cmd = MagicMock()
+            update_cmd.callback = AsyncMock()
+            ctx.bot = MagicMock()
+            ctx.bot.get_command.return_value = update_cmd
             asyncio.run(setup_channels(ctx))
             mock_ensure.assert_awaited_once_with(guild)
+            update_cmd.callback.assert_awaited_once_with(ctx)
         ctx.send.assert_awaited()
 
 

@@ -25,15 +25,15 @@ class TestGithubStats(unittest.TestCase):
         self.addCleanup(self.tmpdir.cleanup)
 
     def test_update_github_stats(self):
-        sample_stats = {
-            "repo1": {"commits": 5, "pull_requests": 2, "merges": 1},
-            "repo2": {"commits": 3, "pull_requests": 1, "merges": 0},
-        }
+        sample_stats = [
+            main.RepoStats(name="repo1", commit_count=5, pr_count=2, merge_count=1),
+            main.RepoStats(name="repo2", commit_count=3, pr_count=1, merge_count=0),
+        ]
 
         message = MagicMock()
         message.id = 42
 
-        with patch("main.fetch_repo_stats", new_callable=AsyncMock, return_value=sample_stats), \
+        with patch("main.gather_repo_stats", new_callable=AsyncMock, return_value=sample_stats), \
              patch("discord_bot.discord_bot_instance.update_channel_name", new_callable=AsyncMock) as mock_rename, \
              patch("main.send_to_discord", new_callable=AsyncMock, return_value=message) as mock_send:
             asyncio.run(main.update_github_stats())

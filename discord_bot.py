@@ -32,27 +32,16 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 bot.add_command(setup_channels)
 
 # Channels used during development that can be purged with the `!clear` command
-DEV_CHANNELS: list[int] = [
-    settings.channel_commits,
-    settings.channel_pull_requests,
-    settings.channel_releases,
-    settings.channel_code_merges,
-    settings.channel_commits_overview,
-    settings.channel_pull_requests_overview,
-    settings.channel_merges_overview,
-    settings.channel_issues,
-    settings.channel_deployment_status,
-    settings.channel_ci_builds,
-    settings.channel_gollum,
-    settings.channel_bot_logs,
-]
+# Only the pull requests channel should be purged via the `!clear` command.
+# Other channels such as statistics or commit logs must remain intact.
+DEV_CHANNELS: list[int] = [settings.channel_pull_requests]
 
 
 @bot.command(name="clear")
 async def clear_channels(ctx: commands.Context) -> None:
-    """Clear all messages from development channels."""
+    """Remove all messages from the pull requests channel."""
     for channel_id in DEV_CHANNELS:
-        await discord_bot_instance.purge_old_messages(channel_id, 0)
+        await discord_bot_instance.purge_channel(channel_id)
     await ctx.send("✅ Channels cleared.")
 
 

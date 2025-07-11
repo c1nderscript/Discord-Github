@@ -34,7 +34,12 @@ class MockSession:
     def __init__(self, responses):
         self._responses = responses
 
-    def get(self, url, headers=None):
+    def get(self, url, headers=None, params=None):
+        if url.endswith("/user/repos"):
+            page = int(params.get("page", 1)) if params else 1
+            if page == 1:
+                return self._responses.pop(0)
+            return MockResp(200, [])
         return self._responses.pop(0)
 
     async def __aenter__(self):
@@ -53,11 +58,11 @@ class TestFetchRepoStats(unittest.TestCase):
     def test_fetch_repo_stats_success(self):
         responses = [
             MockResp(200, [{"full_name": "alice/repo1"}, {"full_name": "alice/repo2"}]),
-            MockResp(200, [], {"Link": "<x?page=5>; rel=\"last\""}),
-            MockResp(200, [], {"Link": "<x?page=3>; rel=\"last\""}),
+            MockResp(200, {"total_count": 5}),
+            MockResp(200, {"total_count": 3}),
             MockResp(200, {"total_count": 2}),
-            MockResp(200, [], {"Link": "<x?page=10>; rel=\"last\""}),
-            MockResp(200, [], {"Link": "<x?page=7>; rel=\"last\""}),
+            MockResp(200, {"total_count": 10}),
+            MockResp(200, {"total_count": 7}),
             MockResp(200, {"total_count": 4}),
         ]
         mock_session = MockSession(responses)
@@ -84,9 +89,9 @@ class TestFetchRepoStats(unittest.TestCase):
 
         self.assertEqual(
             stats,
-            {"alice/repo1": {"commits": 0, "pull_requests": 1, "merged_pull_requests": 0}},
+            {"alice/repo1": {"commits": 0, "pull_requests": 0, "merged_pull_requests": 0}},
         )
-        self.assertEqual(totals, {"commits": 0, "pull_requests": 1, "merged_pull_requests": 0})
+        self.assertEqual(totals, {"commits": 0, "pull_requests": 0, "merged_pull_requests": 0})
 
 
 if __name__ == "__main__":

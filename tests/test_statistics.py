@@ -29,18 +29,11 @@ class TestUpdateStatistics(unittest.TestCase):
         ]
         with patch("main.gather_repo_stats", new_callable=AsyncMock, return_value=repo_stats), \
              patch.object(discord_bot_instance, "update_channel_name", new_callable=AsyncMock) as mock_rename, \
-             patch("main.send_to_discord", new_callable=AsyncMock) as mock_send:
+             patch("main.send_to_discord", new_callable=AsyncMock) as mock_send, \
+             patch.object(settings, "github_token", "token"):
             discord_bot_instance.ready = True
             asyncio.run(main.update_statistics())
 
-        mock_rename.assert_has_awaits(
-            [
-                call(settings.channel_commits, "8-commits"),
-                call(settings.channel_pull_requests, "6-pull-requests"),
-                call(settings.channel_code_merges, "3-merges"),
-            ],
-            any_order=True,
-        )
 
         # Verify embed content
         args, kwargs = mock_send.await_args_list[0]

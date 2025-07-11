@@ -17,12 +17,10 @@ class TestClearCommand(unittest.TestCase):
         ctx = MagicMock()
         ctx.send = AsyncMock()
         with patch.object(
-            discord_bot_instance, "purge_old_messages", new_callable=AsyncMock
+            discord_bot_instance, "purge_channel", new_callable=AsyncMock
         ) as mock_purge:
             asyncio.run(clear_channels(ctx))
-            mock_purge.assert_has_awaits(
-                [call(ch, 0) for ch in DEV_CHANNELS], any_order=True
-            )
+            mock_purge.assert_has_awaits([call(ch) for ch in DEV_CHANNELS], any_order=True)
         ctx.send.assert_awaited_once()
 
 

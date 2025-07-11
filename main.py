@@ -2,6 +2,7 @@
 
 import logging
 import asyncio
+import inspect
 import discord
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -21,7 +22,6 @@ from github_utils import (
     gather_repo_stats,
     RepoStats,
 )
-from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
 
 from formatters import (
@@ -57,10 +57,19 @@ async def health() -> JSONResponse:
 async def update_github_stats() -> None:
     """Update Discord overview channels with GitHub statistics."""
     try:
-        stats = await fetch_repo_stats()
+        repo_stats = await gather_repo_stats()
     except Exception as exc:
         logger.error(f"Failed to fetch repo stats: {exc}")
         return
+
+    stats = {
+        r.name: {
+            "commits": r.commit_count,
+            "pull_requests": r.pr_count,
+            "merges": r.merge_count,
+        }
+        for r in repo_stats
+    }
 
     totals = {"commits": 0, "pull_requests": 0, "merges": 0}
     for counts in stats.values():
@@ -86,9 +95,11 @@ async def update_github_stats() -> None:
 
     message_map = load_stats_map()
     for key, channel_id in channel_map.items():
-        await discord_bot_instance.update_channel_name(
+        rename = discord_bot_instance.update_channel_name(
             channel_id, f"{totals[key]}-{key.replace('_', '-')}"
         )
+        if inspect.isawaitable(rename):
+            await rename
 
         embed = embeds[key]
         message_id = message_map.get(key)
@@ -230,15 +241,21 @@ async def update_statistics() -> None:
         await asyncio.sleep(1)
 
 
-    await discord_bot_instance.update_channel_name(
+    rename = discord_bot_instance.update_channel_name(
         settings.channel_commits, f"{total_commits}-commits"
     )
-    await discord_bot_instance.update_channel_name(
+    if inspect.isawaitable(rename):
+        await rename
+    rename = discord_bot_instance.update_channel_name(
         settings.channel_pull_requests, f"{total_prs}-pull-requests"
     )
-    await discord_bot_instance.update_channel_name(
+    if inspect.isawaitable(rename):
+        await rename
+    rename = discord_bot_instance.update_channel_name(
         settings.channel_code_merges, f"{total_merges}-merges"
     )
+    if inspect.isawaitable(rename):
+        await rename
 
     for repo in stats:
         embed = discord.Embed(

@@ -30,5 +30,11 @@ async def setup_channels(ctx: commands.Context) -> None:
     summary = "\n".join(lines)
     await ctx.send(f"✅ Setup complete.\n```\n{summary}\n```")
 
+    # After creating channels populate the pull requests channel with
+    # any currently open PRs so the server starts with accurate data.
+    update_cmd = ctx.bot.get_command("update")
+    if update_cmd:
+        await update_cmd.callback(ctx)
+
 
 __all__ = ["setup_channels"]
