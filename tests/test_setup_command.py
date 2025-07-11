@@ -18,7 +18,7 @@ class TestSetupCommand(unittest.TestCase):
         ctx.send = AsyncMock()
         guild = MagicMock()
         ctx.guild = guild
-        with patch("utils.channel_manager.ensure_channels", new_callable=AsyncMock) as mock_ensure:
+        with patch("commands.setup.ensure_channels", new_callable=AsyncMock) as mock_ensure:
             mock_ensure.return_value = {"Bot Operations": {"bot-logs": 1}}
             asyncio.run(setup_channels(ctx))
             mock_ensure.assert_awaited_once_with(guild)

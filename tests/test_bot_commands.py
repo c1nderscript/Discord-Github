@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
 import pr_map
-from discord_bot import clear_channels, update_pull_requests, discord_bot_instance
+from discord_bot import clear_channels, populate_pull_requests, discord_bot_instance
 from config import settings
 
 
@@ -34,27 +34,28 @@ class TestBotCommands(unittest.TestCase):
         ctx.send = AsyncMock()
         with patch.object(discord_bot_instance, "purge_channel", new_callable=AsyncMock) as mock_purge:
             asyncio.run(clear_channels(ctx))
-            mock_purge.assert_has_awaits([
-                call(settings.channel_commits),
-                call(settings.channel_pull_requests),
-                call(settings.channel_releases),
-                call(settings.channel_code_merges),
-                call(settings.channel_ci_builds),
-                call(settings.channel_deployment_status),
-                call(settings.channel_gollum),
-            ], any_order=True)
+            mock_purge.assert_awaited_once_with(settings.channel_pull_requests)
         ctx.send.assert_called_once()
 
-    def test_update_pull_requests(self):
+    def test_populate_pull_requests(self):
         ctx = MagicMock()
         ctx.send = AsyncMock()
         message = MagicMock()
         message.id = 123
         sample_pr = {"number": 1, "title": "Test", "html_url": "url", "user": {"login": "bob"}}
-        with patch("github_api.fetch_open_pull_requests", new_callable=AsyncMock, return_value=[("repo/test", sample_pr)]), \
-             patch("discord_bot.send_to_discord", new_callable=AsyncMock, return_value=message) as mock_send:
-            asyncio.run(update_pull_requests(ctx))
+        with patch(
+            "github_api.fetch_open_pull_requests",
+            new_callable=AsyncMock,
+            return_value=[("repo/test", sample_pr)],
+        ), patch(
+            "discord_bot.send_to_discord",
+            new_callable=AsyncMock,
+            return_value=message,
+        ) as mock_send, patch("discord_bot.save_pr_map") as mock_save:
+            mock_save.side_effect = pr_map.save_pr_map
+            asyncio.run(populate_pull_requests(ctx))
             mock_send.assert_awaited_once()
+        mock_save.assert_called_once()
         data = pr_map.load_pr_map()
         self.assertIn("repo/test#1", data)
         ctx.send.assert_called()

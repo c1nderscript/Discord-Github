@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
 import discord_bot
+import pr_map
 from config import settings
 
 
@@ -23,23 +24,26 @@ class TestBotCommands(unittest.TestCase):
     def setUp(self):
         self.ctx = MagicMock()
         self.ctx.send = AsyncMock()
+        self.tmpdir = Path(__file__).resolve().parent / "tmp_cmd"
+        self.tmpdir.mkdir(exist_ok=True)
+        self.map_file = self.tmpdir / "map.json"
+        patcher = patch.object(pr_map, "PR_MAP_FILE", self.map_file)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        for item in self.tmpdir.iterdir():
+            item.unlink()
 
     def test_clear_command(self):
-        channels = [
-            settings.channel_commits,
-            settings.channel_pull_requests,
-            settings.channel_releases,
-            settings.channel_ci_builds,
-            settings.channel_code_merges,
-        ]
         with patch.object(
             discord_bot.discord_bot_instance,
-            "purge_old_messages",
+            "purge_channel",
             new_callable=AsyncMock,
         ) as mock_purge:
             asyncio.run(discord_bot.clear(self.ctx))
 
-        mock_purge.assert_has_awaits([call(ch, 0) for ch in channels], any_order=True)
+        mock_purge.assert_awaited_once_with(settings.channel_pull_requests)
         self.ctx.send.assert_awaited_once()
 
     def test_update_command(self):
@@ -70,7 +74,7 @@ class TestBotCommands(unittest.TestCase):
         ) as mock_load, patch(
             "discord_bot.save_pr_map"
         ) as mock_save:
-            asyncio.run(discord_bot.update_pull_requests(self.ctx))
+            asyncio.run(discord_bot.populate_pull_requests(self.ctx))
 
         mock_fetch.assert_awaited_once()
         mock_format.assert_called_once()
@@ -94,9 +98,14 @@ class TestUpdateCommand(unittest.TestCase):
             "formatters.format_pull_request_event", side_effect=[embed1, embed2]
         ) as mock_fmt, patch(
             "discord_bot.send_to_discord", new_callable=AsyncMock
-        ) as mock_send:
+        ) as mock_send, patch(
+            "discord_bot.load_pr_map", return_value={}
+        ), patch(
+            "discord_bot.save_pr_map"
+        ):
             ctx = MagicMock()
-            asyncio.run(discord_bot.update_pull_requests.callback(ctx))
+            ctx.send = AsyncMock()
+            asyncio.run(discord_bot.populate_pull_requests.callback(ctx))
 
         mock_fetch.assert_awaited_once()
         self.assertEqual(mock_fmt.call_count, 2)

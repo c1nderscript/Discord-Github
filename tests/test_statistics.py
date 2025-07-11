@@ -29,6 +29,7 @@ class TestUpdateStatistics(unittest.TestCase):
         ]
         with patch("main.gather_repo_stats", new_callable=AsyncMock, return_value=repo_stats), \
              patch.object(discord_bot_instance, "update_channel_name", new_callable=AsyncMock) as mock_rename, \
+             patch("main.discord_bot_instance", discord_bot_instance), \
              patch("main.send_to_discord", new_callable=AsyncMock) as mock_send:
             discord_bot_instance.ready = True
             asyncio.run(main.update_statistics())

@@ -25,15 +25,20 @@ class TestGithubStats(unittest.TestCase):
         self.addCleanup(self.tmpdir.cleanup)
 
     def test_update_github_stats(self):
-        sample_stats = {
-            "repo1": {"commits": 5, "pull_requests": 2, "merges": 1},
-            "repo2": {"commits": 3, "pull_requests": 1, "merges": 0},
-        }
+        sample_repo_stats = [
+            {"name": "repo1", "commits": 5, "pull_requests": 2, "merged_pull_requests": 1},
+            {"name": "repo2", "commits": 3, "pull_requests": 1, "merged_pull_requests": 0},
+        ]
+        sample_totals = {"commits": 8, "pull_requests": 3, "merged_pull_requests": 1}
 
         message = MagicMock()
         message.id = 42
 
-        with patch("main.fetch_repo_stats", new_callable=AsyncMock, return_value=sample_stats), \
+        with patch(
+            "main.fetch_repo_stats",
+            new_callable=AsyncMock,
+            return_value=(sample_repo_stats, sample_totals),
+        ), \
              patch("discord_bot.discord_bot_instance.update_channel_name", new_callable=AsyncMock) as mock_rename, \
              patch("main.send_to_discord", new_callable=AsyncMock, return_value=message) as mock_send:
             asyncio.run(main.update_github_stats())
@@ -45,11 +50,14 @@ class TestGithubStats(unittest.TestCase):
         ], any_order=True)
         self.assertEqual(mock_send.await_count, 3)
         data = stats_map.load_stats_map()
-        self.assertEqual(data, {
-            "commits": 42,
-            "pull_requests": 42,
-            "merges": 42,
-        })
+        self.assertEqual(
+            data,
+            {
+                "commits": 42,
+                "pull_requests": 42,
+                "merged_pull_requests": 42,
+            },
+        )
 
 
 if __name__ == "__main__":

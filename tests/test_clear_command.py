@@ -2,14 +2,14 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, call, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
 
-from discord_bot import clear_channels, DEV_CHANNELS, discord_bot_instance
+from discord_bot import clear_channels, discord_bot_instance, PR_CHANNEL
 
 
 class TestClearCommand(unittest.TestCase):
@@ -17,12 +17,10 @@ class TestClearCommand(unittest.TestCase):
         ctx = MagicMock()
         ctx.send = AsyncMock()
         with patch.object(
-            discord_bot_instance, "purge_old_messages", new_callable=AsyncMock
+            discord_bot_instance, "purge_channel", new_callable=AsyncMock
         ) as mock_purge:
             asyncio.run(clear_channels(ctx))
-            mock_purge.assert_has_awaits(
-                [call(ch, 0) for ch in DEV_CHANNELS], any_order=True
-            )
+            mock_purge.assert_awaited_once_with(PR_CHANNEL)
         ctx.send.assert_awaited_once()
 
 

@@ -20,8 +20,8 @@ from github_utils import (
     is_github_event_relevant,
     gather_repo_stats,
     RepoStats,
+    fetch_repo_stats,
 )
-from github_stats import fetch_repo_stats
 from stats_map import load_stats_map, save_stats_map
 
 from formatters import (
@@ -57,37 +57,38 @@ async def health() -> JSONResponse:
 async def update_github_stats() -> None:
     """Update Discord overview channels with GitHub statistics."""
     try:
-        stats = await fetch_repo_stats()
+        repo_stats, totals = await fetch_repo_stats()
     except Exception as exc:
         logger.error(f"Failed to fetch repo stats: {exc}")
         return
-
-    totals = {"commits": 0, "pull_requests": 0, "merges": 0}
-    for counts in stats.values():
-        for key in totals:
-            totals[key] += counts.get(key, 0)
 
     embeds = {}
     for key, title in [
         ("commits", "Commit Counts"),
         ("pull_requests", "Pull Request Counts"),
-        ("merges", "Merge Counts"),
+        ("merged_pull_requests", "Merge Counts"),
     ]:
         embed = discord.Embed(title=title, color=discord.Color.blue())
-        for repo, counts in stats.items():
-            embed.add_field(name=repo, value=str(counts.get(key, 0)), inline=False)
+        for repo in repo_stats:
+            embed.add_field(name=repo["name"], value=str(repo.get(key, 0)), inline=False)
         embeds[key] = embed
 
     channel_map = {
         "commits": settings.channel_commits,
         "pull_requests": settings.channel_pull_requests,
-        "merges": settings.channel_code_merges,
+        "merged_pull_requests": settings.channel_code_merges,
     }
 
     message_map = load_stats_map()
+    rename_map = {
+        "commits": "commits",
+        "pull_requests": "pull-requests",
+        "merged_pull_requests": "merges",
+    }
+
     for key, channel_id in channel_map.items():
         await discord_bot_instance.update_channel_name(
-            channel_id, f"{totals[key]}-{key.replace('_', '-')}"
+            channel_id, f"{totals[key]}-{rename_map[key]}"
         )
 
         embed = embeds[key]

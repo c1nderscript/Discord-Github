@@ -31,29 +31,18 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 bot.add_command(setup_channels)
 
-# Channels used during development that can be purged with the `!clear` command
-DEV_CHANNELS: list[int] = [
-    settings.channel_commits,
-    settings.channel_pull_requests,
-    settings.channel_releases,
-    settings.channel_code_merges,
-    settings.channel_commits_overview,
-    settings.channel_pull_requests_overview,
-    settings.channel_merges_overview,
-    settings.channel_issues,
-    settings.channel_deployment_status,
-    settings.channel_ci_builds,
-    settings.channel_gollum,
-    settings.channel_bot_logs,
-]
+# Channel that can be purged with the `!clear` command
+PR_CHANNEL: int = settings.channel_pull_requests
 
 
 @bot.command(name="clear")
 async def clear_channels(ctx: commands.Context) -> None:
-    """Clear all messages from development channels."""
-    for channel_id in DEV_CHANNELS:
-        await discord_bot_instance.purge_old_messages(channel_id, 0)
-    await ctx.send("✅ Channels cleared.")
+    """Remove all messages from the pull requests channel."""
+    await discord_bot_instance.purge_channel(PR_CHANNEL)
+    await ctx.send("✅ Pull requests channel cleared.")
+
+# Backwards compatibility for tests importing ``clear``
+clear = clear_channels
 
 
 class DiscordBot:
@@ -309,9 +298,9 @@ async def send_to_discord(
 
 
 
-@bot.command(name="update")
-async def update_pull_requests(ctx: commands.Context) -> None:
-    """Ensure all active pull requests are listed in the pull requests channel."""
+@bot.command(name="pr", aliases=["update"])
+async def populate_pull_requests(ctx: commands.Context) -> None:
+    """Populate the pull requests channel with all open pull requests."""
     from github_api import fetch_open_pull_requests
 
     pr_map_data = load_pr_map()
