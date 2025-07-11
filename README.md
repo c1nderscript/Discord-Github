@@ -13,7 +13,7 @@ Additional setup and troubleshooting details can be found in the [docs directory
 - **`main.py`** – FastAPI application exposing `/github` and `/health` endpoints.
 - **`discord_bot.py`** – Discord client used to send embeds to channels.
 - **`run.py`** – simple launcher that runs the app with Uvicorn.
-- **Utilities** – scripts like `add_all_webhooks.py` and `cleanup_pr_messages.py` help manage webhooks and message history.
+- **Utilities** – scripts like `add_all_webhooks.py` and `cleanup_pr_messages.py` help manage webhooks and message history. Closed pull request messages are cleaned up automatically by the `periodic_pr_cleanup` task at the interval set by `PR_CLEANUP_INTERVAL_MINUTES` (see `cleanup.py`).
 
 See the [Channel mapping](docs/ChannelMapping.md) document for routing details.
 
@@ -131,10 +131,10 @@ be customised if your Discord server uses different IDs.
 | `CHANNEL_COMMITS_OVERVIEW` | Optional overview channel for commits |
 | `CHANNEL_PULL_REQUESTS_OVERVIEW` | Optional overview channel for PRs |
 | `CHANNEL_MERGES_OVERVIEW` | Optional overview channel for merges |
-| `PR_CLEANUP_INTERVAL_MINUTES` | Interval (minutes) between checks for resolved PRs |
+| `PR_CLEANUP_INTERVAL_MINUTES` | Interval (minutes) between `periodic_pr_cleanup` runs |
 
 `MESSAGE_RETENTION_DAYS` can be set to automatically prune older messages (default `30`).
-`PR_CLEANUP_INTERVAL_MINUTES` controls how often the bot checks for resolved pull requests (default `60`).
+`PR_CLEANUP_INTERVAL_MINUTES` defines how often the `periodic_pr_cleanup` task runs to delete closed pull request messages. See `cleanup.py` for implementation details (default `60`).
 
 ## Docker
 
@@ -170,7 +170,7 @@ pytest -q
 
 ## Documentation
 
-This script checks each entry in `pr_message_map.json`, queries the GitHub API to see if the PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
+The cleanup logic in `cleanup.py` checks each entry in `pr_message_map.json`, queries the GitHub API to see if a PR is closed, and deletes the corresponding Discord message from the `#pull-requests` channel.
 
 ## Clearing the Pull Requests Channel
 
