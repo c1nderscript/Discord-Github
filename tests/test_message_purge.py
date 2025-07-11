@@ -22,7 +22,7 @@ class TestMessagePurge(unittest.TestCase):
         self.addCleanup(patcher.stop)
         self.addCleanup(self.tmpdir.cleanup)
 
-    def test_startup_event_triggers_purge(self):
+    def test_lifespan_triggers_purge(self):
         os.environ["MESSAGE_RETENTION_DAYS"] = "5"
         importlib.reload(config)
         import main
@@ -44,7 +44,9 @@ class TestMessagePurge(unittest.TestCase):
         ) as mock_cleanup, patch(
             "asyncio.create_task", side_effect=fake_create_task
         ):
-            asyncio.run(main.startup_event())
+            manager = main.lifespan(main.app)
+            asyncio.run(manager.__aenter__())
+            asyncio.run(manager.__aexit__(None, None, None))
 
         for coro in stored:
             asyncio.run(coro)
