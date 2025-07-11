@@ -15,9 +15,6 @@ import main
 from discord_bot import discord_bot_instance
 from config import settings
 
-from config import settings
-from discord_bot import discord_bot_instance
-
 from github_utils import RepoStats
 
 
