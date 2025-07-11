@@ -8,6 +8,8 @@ from typing import Optional, Any, Dict, List
 from datetime import datetime, timedelta
 import aiohttp
 
+from utils.embed_utils import split_embed_fields
+
 from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
 from config import settings
@@ -275,20 +277,29 @@ async def send_to_discord(
     embed: discord.Embed = None,
     use_webhook: bool = False,
 ):
-    """Global function to send messages to Discord."""
-    if use_webhook:
-        # Use webhook URL from environment variable or settings
-        webhook_url = getattr(settings, "discord_webhook_url", None)
-        if webhook_url:
-            await discord_bot_instance.send_to_webhook(webhook_url, content, embed)
-        else:
-            # Fallback to channel send if no webhook URL configured
-            return await discord_bot_instance.send_to_channel(
-                channel_id, content, embed
-            )
+    """Send a message or embed to a Discord channel or webhook."""
 
+    embed_list: List[Optional[discord.Embed]]
+    if embed and len(embed.fields) > 25:
+        embed_list = split_embed_fields(embed)
     else:
-        return await discord_bot_instance.send_to_channel(channel_id, content, embed)
+        embed_list = [embed]
+
+    sent: Optional[discord.Message] = None
+    for idx, part in enumerate(embed_list):
+        part_content = content if idx == 0 else None
+        if use_webhook:
+            webhook_url = getattr(settings, "discord_webhook_url", None)
+            if webhook_url:
+                await discord_bot_instance.send_to_webhook(webhook_url, part_content, part)
+                continue
+            sent = await discord_bot_instance.send_to_channel(channel_id, part_content, part)
+        else:
+            msg = await discord_bot_instance.send_to_channel(channel_id, part_content, part)
+            if sent is None:
+                sent = msg
+
+    return sent
 
 
 # Duplicate clear command and function removed to fix CommandRegistrationError
