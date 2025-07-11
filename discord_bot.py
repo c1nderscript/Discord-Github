@@ -12,7 +12,7 @@ from logging_config import setup_logging
 from pr_map import load_pr_map, save_pr_map
 from config import settings
 
-from github_prs import fetch_open_pull_requests
+from github_api import fetch_open_pull_requests
 from formatters import format_pull_request_event
 from commands.setup import setup_channels
 
@@ -302,8 +302,6 @@ async def send_to_discord(
 @bot.command(name="update", aliases=["pr"])
 async def update_pull_requests(ctx: commands.Context) -> None:
     """Ensure all active pull requests are listed in the pull requests channel."""
-    from github_api import fetch_open_pull_requests
-
     pr_map_data = load_pr_map()
     open_prs = await fetch_open_pull_requests()
     added = 0

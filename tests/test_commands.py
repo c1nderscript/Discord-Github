@@ -47,7 +47,7 @@ class TestBotCommands(unittest.TestCase):
         message.id = 99
 
         with patch(
-            "github_api.fetch_open_pull_requests",
+            "discord_bot.fetch_open_pull_requests",
             new_callable=AsyncMock,
             return_value=sample_prs,
         ) as mock_fetch, patch(
@@ -82,7 +82,7 @@ class TestUpdateCommand(unittest.TestCase):
         embed2 = MagicMock()
 
         with patch(
-            "github_api.fetch_open_pull_requests", new_callable=AsyncMock, return_value=prs
+            "discord_bot.fetch_open_pull_requests", new_callable=AsyncMock, return_value=prs
         ) as mock_fetch, patch(
             "formatters.format_pull_request_event", side_effect=[embed1, embed2]
         ) as mock_fmt, patch(
