@@ -23,6 +23,12 @@ This directory contains extended documentation for setting up and operating the 
 - GitHub or Discord may throttle requests when activity spikes.
 - Reduce message volume or batch updates to avoid bursts.
 
+### Embed Too Large
+- Discord allows at most 25 fields per embed. The bot automatically splits
+  oversized embeds into multiple messages, but errors can still occur if this
+  limit is exceeded before splitting. Check logs for `embeds.0.fields` errors
+  to diagnose large payloads.
+
 ### Missing Channels
 - If the bot logs errors about unknown channel IDs, verify the IDs in `.env`.
 - Ensure the bot has access to each channel and the required permissions to post.
