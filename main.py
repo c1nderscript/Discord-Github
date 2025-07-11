@@ -5,6 +5,7 @@ import asyncio
 import discord
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 
 from logging_config import setup_logging
 from config import settings
@@ -40,8 +41,34 @@ from formatters import (
 # Setup logging
 setup_logging()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan for startup tasks."""
+    logger.info("Starting up Discord bot...")
+    asyncio.create_task(discord_bot_instance.start())
+    asyncio.create_task(
+        periodic_pr_cleanup(settings.pr_cleanup_interval_minutes)
+    )
+    asyncio.create_task(update_github_stats())
+
+    purge_channels = [
+        settings.channel_commits,
+        settings.channel_pull_requests,
+        settings.channel_releases,
+    ]
+    for channel_id in purge_channels:
+        asyncio.create_task(
+            discord_bot_instance.purge_old_messages(
+                channel_id, settings.message_retention_days
+            )
+        )
+
+    asyncio.create_task(update_statistics())
+
+    yield
+
 # Initialize FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 
 # Logger
@@ -126,31 +153,6 @@ async def update_github_stats() -> None:
             message_map[key] = msg.id
 
     save_stats_map(message_map)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Startup event to initialize Discord bot."""
-    logger.info("Starting up Discord bot...")
-    asyncio.create_task(discord_bot_instance.start())
-    asyncio.create_task(
-        periodic_pr_cleanup(settings.pr_cleanup_interval_minutes)
-    )
-    asyncio.create_task(update_github_stats())
-
-    purge_channels = [
-        settings.channel_commits,
-        settings.channel_pull_requests,
-        settings.channel_releases,
-    ]
-    for channel_id in purge_channels:
-        asyncio.create_task(
-            discord_bot_instance.purge_old_messages(
-                channel_id, settings.message_retention_days
-            )
-        )
-
-    asyncio.create_task(update_statistics())
 
 
 @app.post("/github")
