@@ -2,9 +2,8 @@
 
 import discord
 from discord.ext import commands
-import asyncio
 import logging
-from typing import Optional, Any, Dict, List
+from typing import Optional, List
 from datetime import datetime, timedelta
 import aiohttp
 
@@ -15,7 +14,6 @@ from config import settings
 from utils.embed_utils import split_embed_fields
 
 from github_api import fetch_open_pull_requests
-from formatters import format_pull_request_event
 from commands.setup import setup_channels
 
 
