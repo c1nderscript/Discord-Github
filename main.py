@@ -97,9 +97,9 @@ async def update_github_stats() -> None:
         embeds[key] = embed
 
     channel_map = {
-        "commits": settings.channel_commits,
-        "pull_requests": settings.channel_pull_requests,
-        "merges": settings.channel_code_merges,
+        "commits": settings.channel_commits_overview,
+        "pull_requests": settings.channel_pull_requests_overview,
+        "merges": settings.channel_merges_overview,
     }
 
     message_map = load_stats_map()
@@ -136,7 +136,8 @@ async def startup_event():
     asyncio.create_task(
         periodic_pr_cleanup(settings.pr_cleanup_interval_minutes)
     )
-    asyncio.create_task(update_github_stats())
+    asyncio.create_task(periodic_update_github_stats(60))
+    asyncio.create_task(periodic_update_pull_request_channel(60))
 
     purge_channels = [
         settings.channel_commits,
@@ -251,13 +252,13 @@ async def update_statistics() -> None:
 
 
     await discord_bot_instance.update_channel_name(
-        settings.channel_commits, f"{total_commits}-commits"
+        settings.channel_commits_overview, f"{total_commits}-commits"
     )
     await discord_bot_instance.update_channel_name(
-        settings.channel_pull_requests, f"{total_prs}-pull-requests"
+        settings.channel_pull_requests_overview, f"{total_prs}-pull-requests"
     )
     await discord_bot_instance.update_channel_name(
-        settings.channel_code_merges, f"{total_merges}-merges"
+        settings.channel_merges_overview, f"{total_merges}-merges"
     )
 
     for repo in stats:
@@ -269,6 +270,43 @@ async def update_statistics() -> None:
         embed.add_field(name="Pull Requests", value=str(repo.pr_count), inline=True)
         embed.add_field(name="Merges", value=str(repo.merge_count), inline=True)
 
-        await send_to_discord(settings.channel_commits, embed=embed)
-        await send_to_discord(settings.channel_pull_requests, embed=embed)
-        await send_to_discord(settings.channel_code_merges, embed=embed)
+        await send_to_discord(settings.channel_commits_overview, embed=embed)
+        await send_to_discord(settings.channel_pull_requests_overview, embed=embed)
+        await send_to_discord(settings.channel_merges_overview, embed=embed)
+
+
+async def update_pull_request_channel() -> None:
+    """Update the pull request channel name with the count of open PRs."""
+    try:
+        pulls = await fetch_open_pull_requests()
+        count = len(pulls)
+    except Exception as exc:  # pragma: no cover - network failure
+        logger.error(f"Failed to fetch open pull requests: {exc}")
+        return
+
+    while not discord_bot_instance.ready:
+        await asyncio.sleep(1)
+
+    await discord_bot_instance.update_channel_name(
+        settings.channel_pull_requests, f"{count}-pull-requests"
+    )
+
+
+async def periodic_update_pull_request_channel(interval_seconds: int = 60) -> None:
+    """Run pull request channel updates on a schedule."""
+    while True:
+        try:
+            await update_pull_request_channel()
+        except Exception as exc:  # pragma: no cover - unexpected runtime failure
+            logger.error("Pull request count update failed: %s", exc)
+        await asyncio.sleep(interval_seconds)
+
+
+async def periodic_update_github_stats(interval_minutes: int = 60) -> None:
+    """Periodically update overview channel statistics."""
+    while True:
+        try:
+            await update_github_stats()
+        except Exception as exc:  # pragma: no cover - unexpected runtime failure
+            logger.error("GitHub stats update failed: %s", exc)
+        await asyncio.sleep(interval_minutes * 60)

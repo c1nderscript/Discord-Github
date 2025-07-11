@@ -70,7 +70,7 @@ The bot posts messages to multiple Discord channels. Override their IDs in `.env
 - `CHANNEL_BOT_LOGS`
 - `PR_CLEANUP_INTERVAL_MINUTES`
 
-The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them:
+The bot can send high-level summaries to dedicated overview channels. Set these IDs in your `.env` file if you want to use them. The overview channels are renamed every hour with aggregate commit, pull request, and merge counts. The main pull-requests channel is updated every minute to display the current number of open pull requests:
 
 Copy `.env.template` to `.env` and edit each section. The template groups
 variables for easier configuration. A shortened example is shown below:

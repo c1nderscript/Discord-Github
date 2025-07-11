@@ -42,6 +42,10 @@ class TestMessagePurge(unittest.TestCase):
         ) as mock_purge, patch(
             "main.periodic_pr_cleanup", new_callable=AsyncMock
         ) as mock_cleanup, patch(
+            "main.periodic_update_github_stats", new_callable=AsyncMock
+        ) as mock_stats, patch(
+            "main.periodic_update_pull_request_channel", new_callable=AsyncMock
+        ) as mock_pr_update, patch(
             "asyncio.create_task", side_effect=fake_create_task
         ):
             asyncio.run(main.startup_event())
@@ -58,6 +62,8 @@ class TestMessagePurge(unittest.TestCase):
             [call(channel, 5) for channel in channels], any_order=True
         )
         mock_cleanup.assert_awaited_once()
+        mock_stats.assert_awaited_once()
+        mock_pr_update.assert_awaited_once()
 
     def test_purge_removes_pr_map_entries(self):
         pr_map.save_pr_map({"repo#1": 111})

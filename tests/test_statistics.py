@@ -38,9 +38,9 @@ class TestUpdateStatistics(unittest.TestCase):
 
         mock_rename.assert_has_awaits(
             [
-                call(settings.channel_commits, "8-commits"),
-                call(settings.channel_pull_requests, "6-pull-requests"),
-                call(settings.channel_code_merges, "3-merges"),
+                call(settings.channel_commits_overview, "8-commits"),
+                call(settings.channel_pull_requests_overview, "6-pull-requests"),
+                call(settings.channel_merges_overview, "3-merges"),
             ],
             any_order=True,
         )
