@@ -24,7 +24,7 @@ class TestHealthEndpoint(unittest.TestCase):
         ), patch.object(
             discord_bot_instance, "purge_old_messages", new_callable=AsyncMock
         ), patch.object(
-            main, "cleanup_pr_messages", new_callable=AsyncMock
+            main, "periodic_pr_cleanup", new_callable=AsyncMock
         ):
             with TestClient(main.app) as client:
                 response = client.get("/health")
