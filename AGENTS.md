@@ -147,7 +147,11 @@ Additional overview channels aggregate daily summaries and reports:
        # Send embed with error handling
        # Fallback to bot logs channel on failure
        # Log all send attempts for debugging
+       # Automatically split embeds >25 fields via split_embed_fields
    ```
+
+   This helper keeps messages within Discord's 25 field limit. Custom clients
+   should call `utils.embed_utils.split_embed_fields` before sending embeds.
 
    ## Configuration Management
 
@@ -433,3 +437,5 @@ Additional overview channels aggregate daily summaries and reports:
    - Updated pull requests channel mapping to ID 1392485974398861354
    ### 2025-07-10
    - Added instruction for maintaining `setup.sh` as the Codex environment setup script
+### 2025-07-11
+- Documented embed splitting in `send_to_discord` and usage of `split_embed_fields`.
