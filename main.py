@@ -81,6 +81,22 @@ async def health() -> JSONResponse:
     return JSONResponse(content={"status": "ok"})
 
 
+MAX_FIELDS = 25
+
+
+def build_stat_embeds(title: str, repo_counts: dict[str, int]) -> list[discord.Embed]:
+    """Build embeds with at most MAX_FIELDS per embed."""
+    items = list(repo_counts.items())
+    embeds = []
+    for i in range(0, len(items), MAX_FIELDS):
+        embed_title = title if i == 0 else f"{title} (cont.)"
+        embed = discord.Embed(title=embed_title, color=discord.Color.blue())
+        for repo, count in items[i : i + MAX_FIELDS]:
+            embed.add_field(name=repo, value=str(count), inline=False)
+        embeds.append(embed)
+    return embeds
+
+
 async def update_github_stats() -> None:
     """Update Discord overview channels with GitHub statistics."""
     stats: dict[str, dict[str, int]] = {}
@@ -112,16 +128,14 @@ async def update_github_stats() -> None:
         for key in totals:
             totals[key] += counts.get(key, 0)
 
-    embeds = {}
+    embeds: dict[str, list[discord.Embed]] = {}
     for key, title in [
         ("commits", "Commit Counts"),
         ("pull_requests", "Pull Request Counts"),
         ("merges", "Merge Counts"),
     ]:
-        embed = discord.Embed(title=title, color=discord.Color.blue())
-        for repo, counts in stats.items():
-            embed.add_field(name=repo, value=str(counts.get(key, 0)), inline=False)
-        embeds[key] = embed
+        repo_counts = {repo: counts.get(key, 0) for repo, counts in stats.items()}
+        embeds[key] = build_stat_embeds(title, repo_counts)
 
     channel_map = {
         "commits": settings.channel_commits,
@@ -135,22 +149,37 @@ async def update_github_stats() -> None:
             channel_id, f"{totals[key]}-{key.replace('_', '-')}"
         )
 
-        embed = embeds[key]
-        message_id = message_map.get(key)
+        embed_list = embeds[key]
+        stored_ids = message_map.get(key, [])
         channel = discord_bot_instance.bot.get_channel(channel_id)
-        if message_id and channel:
-            try:
-                message = await channel.fetch_message(message_id)
-                await message.edit(embed=embed)
-                continue
-            except Exception as exc:
-                logger.warning(
-                    f"Failed to edit stats message in {channel_id}: {exc}"
-                )
+        new_ids: list[int] = []
+        for idx, embed in enumerate(embed_list):
+            msg_id = stored_ids[idx] if idx < len(stored_ids) else None
+            if msg_id and channel:
+                try:
+                    message = await channel.fetch_message(msg_id)
+                    await message.edit(embed=embed)
+                    new_ids.append(msg_id)
+                    continue
+                except Exception as exc:
+                    logger.warning(
+                        f"Failed to edit stats message {msg_id} in {channel_id}: {exc}"
+                    )
+            msg = await send_to_discord(channel_id, embed=embed)
+            if msg:
+                new_ids.append(msg.id)
 
-        msg = await send_to_discord(channel_id, embed=embed)
-        if msg:
-            message_map[key] = msg.id
+        if channel and len(stored_ids) > len(embed_list):
+            for old_id in stored_ids[len(embed_list) :]:
+                try:
+                    message = await channel.fetch_message(old_id)
+                    await message.delete()
+                except Exception as exc:  # pragma: no cover - network failure
+                    logger.warning(
+                        f"Failed to delete old stats message {old_id} in {channel_id}: {exc}"
+                    )
+
+        message_map[key] = new_ids
 
     save_stats_map(message_map)
 

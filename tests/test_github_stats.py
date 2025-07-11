@@ -46,9 +46,9 @@ class TestGithubStats(unittest.TestCase):
         self.assertEqual(mock_send.await_count, 3)
         data = stats_map.load_stats_map()
         self.assertEqual(data, {
-            "commits": 42,
-            "pull_requests": 42,
-            "merges": 42,
+            "commits": [42],
+            "pull_requests": [42],
+            "merges": [42],
         })
 
 
