@@ -15,6 +15,8 @@ from formatters import (
     format_workflow_job,
     format_check_run,
     format_check_suite,
+    format_deployment_event,
+    format_gollum_event,
     get_status_color,
     get_status_icon,
     calculate_duration,
@@ -213,6 +215,39 @@ class TestFormatters(unittest.TestCase):
         self.assertEqual(fields["Branch"], "unknown")
         self.assertEqual(fields["Status"], "Unknown")
         self.assertEqual(fields["Duration"], "N/A")
+
+    def test_format_deployment_event(self):
+        """Test deployment event formatter."""
+        payload = self.load_payload("deployment_event.json")
+        embed = format_deployment_event(payload)
+
+        self.assertIsInstance(embed, discord.Embed)
+        self.assertEqual(embed.title, "✅ Deployment to production: success")
+        self.assertEqual(embed.color, discord.Color.green())
+        self.assertEqual(embed.url, "https://example.com/deployment/42")
+
+        fields = {field.name: field.value for field in embed.fields}
+        self.assertEqual(fields["Repository"], "owner/repo")
+        self.assertEqual(fields["Environment"], "production")
+        self.assertEqual(fields["Status"], "Success")
+
+    def test_format_gollum_event(self):
+        """Test wiki gollum event formatter."""
+        payload = self.load_payload("gollum_event.json")
+        embed = format_gollum_event(payload)
+
+        self.assertIsInstance(embed, discord.Embed)
+        self.assertEqual(embed.title, "📚 Wiki Updated")
+        self.assertEqual(embed.color, discord.Color.blue())
+
+        fields = {field.name: field.value for field in embed.fields}
+        self.assertEqual(fields["Repository"], "owner/repo")
+        self.assertEqual(fields["Updated by"], "octocat")
+        expected_pages = (
+            "[Home](https://github.com/owner/repo/wiki/Home) (edited)\n"
+            "[About](https://github.com/owner/repo/wiki/About) (created)"
+        )
+        self.assertEqual(fields["Pages"], expected_pages)
 
 
 if __name__ == "__main__":

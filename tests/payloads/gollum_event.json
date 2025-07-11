@@ -1,0 +1,20 @@
+{
+  "pages": [
+    {
+      "title": "Home",
+      "action": "edited",
+      "html_url": "https://github.com/owner/repo/wiki/Home"
+    },
+    {
+      "title": "About",
+      "action": "created",
+      "html_url": "https://github.com/owner/repo/wiki/About"
+    }
+  ],
+  "repository": {
+    "full_name": "owner/repo"
+  },
+  "sender": {
+    "login": "octocat"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "deployment": {
+    "environment": "production"
+  },
+  "deployment_status": {
+    "state": "success",
+    "target_url": "https://example.com/deployment/42"
+  },
+  "repository": {
+    "full_name": "owner/repo"
+  }
+}
