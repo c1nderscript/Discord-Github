@@ -40,8 +40,7 @@ For a quicker start you can run the helper script:
 ./setup.sh
 ```
 
-It installs all dependencies inside `.venv` and copies `.env.template` to `.env`
-if needed. See **AGENTS.md** for guidelines on keeping this script current.
+The script installs every package from `requirements.txt` inside `.venv` (including `discord.py`, which the tests depend on) and copies `.env.template` to `.env` if needed. See **AGENTS.md** for guidelines on keeping this script current.
 
 Embeds with more than 25 fields are automatically split into multiple messages
 when sent. In this case `send_to_discord()` returns a list of
@@ -163,13 +162,16 @@ Traefik configuration is included via `traefik.yml`.
 ## Tests
 
 The test suite runs inside the Python virtual environment created by
-`setup.sh`. If you haven't run the script yet, execute:
+`setup.sh`. The tests rely on the same dependencies listed in
+`requirements.txt` such as `discord.py`. If you haven't run the script yet,
+execute:
 
 ```bash
 ./setup.sh
 ```
 
-Then activate the environment and run `pytest`:
+The script installs everything from `requirements.txt` and adds `pytest`.
+After it completes, activate the environment and run `pytest`:
 
 ```bash
 source .venv/bin/activate
