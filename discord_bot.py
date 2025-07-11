@@ -220,10 +220,23 @@ class DiscordBot:
                     )
                 return
 
-            if embed:
-                message = await channel.send(embed=embed)
-            else:
-                message = await channel.send(content)
+            embeds = [embed] if embed else [None]
+            if embed and len(embed.fields) > 25:
+                from utils.embed_utils import split_embed_fields
+                embeds = split_embed_fields(embed)
+
+            message = None
+            first = True
+            for part in embeds:
+                msg_content = content if first else None
+                if part:
+                    if msg_content is not None:
+                        message = await channel.send(msg_content, embed=part)
+                    else:
+                        message = await channel.send(embed=part)
+                else:
+                    message = await channel.send(msg_content)
+                first = False
             return message
 
         except Exception as e:
@@ -276,19 +289,29 @@ async def send_to_discord(
     use_webhook: bool = False,
 ):
     """Global function to send messages to Discord."""
-    if use_webhook:
-        # Use webhook URL from environment variable or settings
-        webhook_url = getattr(settings, "discord_webhook_url", None)
-        if webhook_url:
-            await discord_bot_instance.send_to_webhook(webhook_url, content, embed)
-        else:
-            # Fallback to channel send if no webhook URL configured
-            return await discord_bot_instance.send_to_channel(
-                channel_id, content, embed
-            )
+    embeds = [embed] if embed else [None]
+    if embed and len(embed.fields) > 25:
+        from utils.embed_utils import split_embed_fields
+        embeds = split_embed_fields(embed)
 
+    message = None
+
+    if use_webhook:
+        webhook_url = getattr(settings, "discord_webhook_url", None)
+        if not webhook_url:
+            return await discord_bot_instance.send_to_channel(channel_id, content, embed)
+        first = True
+        for part in embeds:
+            msg_content = content if first else None
+            await discord_bot_instance.send_to_webhook(webhook_url, msg_content, part)
+            first = False
     else:
-        return await discord_bot_instance.send_to_channel(channel_id, content, embed)
+        first = True
+        for part in embeds:
+            msg_content = content if first else None
+            message = await discord_bot_instance.send_to_channel(channel_id, msg_content, part)
+            first = False
+    return message
 
 
 # Duplicate clear command and function removed to fix CommandRegistrationError
