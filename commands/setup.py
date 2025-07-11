@@ -7,7 +7,6 @@ from discord.ext import commands
 
 from utils.channel_manager import ensure_channels
 from utils.permissions import is_admin
-from utils.config import CHANNEL_IDS_FILE
 
 
 @commands.command(name="setup")
