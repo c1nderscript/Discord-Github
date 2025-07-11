@@ -206,8 +206,7 @@ class DiscordBot:
     ) -> Optional[discord.Message]:
         """Send a message to a specific Discord channel and return the sent message."""
         if not self.ready:
-            logger.warning("Bot is not ready yet, queuing message...")
-            await asyncio.sleep(2)  # Wait a bit for bot to be ready
+            await self.bot.wait_until_ready()
 
         try:
             channel = self.bot.get_channel(channel_id)
