@@ -3,6 +3,7 @@
 import logging
 import asyncio
 import discord
+from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -40,8 +41,46 @@ from formatters import (
 # Setup logging
 setup_logging()
 
-# Initialize FastAPI app
-app = FastAPI()
+# Initialize FastAPI app with lifespan context
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting up Discord bot...")
+    tasks: list[asyncio.Task] = []
+
+    tasks.append(asyncio.create_task(discord_bot_instance.start()))
+    tasks.append(
+        asyncio.create_task(
+            periodic_pr_cleanup(settings.pr_cleanup_interval_minutes)
+        )
+    )
+    tasks.append(asyncio.create_task(update_github_stats()))
+
+    purge_channels = [
+        settings.channel_commits,
+        settings.channel_pull_requests,
+        settings.channel_releases,
+    ]
+    for channel_id in purge_channels:
+        tasks.append(
+            asyncio.create_task(
+                discord_bot_instance.purge_old_messages(
+                    channel_id, settings.message_retention_days
+                )
+            )
+        )
+
+    tasks.append(asyncio.create_task(update_statistics()))
+
+    try:
+        yield
+    finally:
+        for task in tasks:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 # Logger
@@ -127,30 +166,6 @@ async def update_github_stats() -> None:
 
     save_stats_map(message_map)
 
-
-@app.on_event("startup")
-async def startup_event():
-    """Startup event to initialize Discord bot."""
-    logger.info("Starting up Discord bot...")
-    asyncio.create_task(discord_bot_instance.start())
-    asyncio.create_task(
-        periodic_pr_cleanup(settings.pr_cleanup_interval_minutes)
-    )
-    asyncio.create_task(update_github_stats())
-
-    purge_channels = [
-        settings.channel_commits,
-        settings.channel_pull_requests,
-        settings.channel_releases,
-    ]
-    for channel_id in purge_channels:
-        asyncio.create_task(
-            discord_bot_instance.purge_old_messages(
-                channel_id, settings.message_retention_days
-            )
-        )
-
-    asyncio.create_task(update_statistics())
 
 
 @app.post("/github")

@@ -5,8 +5,10 @@ import tempfile
 from pathlib import Path
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch, call
+import sys
 
 os.environ.setdefault("DISCORD_BOT_TOKEN", "dummy")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pr_map
 import config
@@ -44,7 +46,7 @@ class TestMessagePurge(unittest.TestCase):
         ) as mock_cleanup, patch(
             "asyncio.create_task", side_effect=fake_create_task
         ):
-            asyncio.run(main.startup_event())
+            asyncio.run(main.lifespan(main.app).__aenter__())
 
         for coro in stored:
             asyncio.run(coro)

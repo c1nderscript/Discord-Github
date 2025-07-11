@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
+from contextlib import asynccontextmanager
 from fastapi.testclient import TestClient
 
 # Ensure project root is on path
@@ -19,7 +20,13 @@ class TestHealthEndpoint(unittest.TestCase):
 
     def test_health_ok(self):
         """Health endpoint returns expected response."""
+        @asynccontextmanager
+        async def dummy_lifespan(app):
+            yield
+
         with patch.object(
+            main.app.router, "lifespan_context", dummy_lifespan
+        ), patch.object(
             discord_bot_instance, "start", new_callable=AsyncMock
         ), patch.object(
             discord_bot_instance, "purge_old_messages", new_callable=AsyncMock
