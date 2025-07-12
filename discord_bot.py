@@ -1,4 +1,4 @@
-"""Discord bot client for handling GitHub webhook events."""
+"""Discord bot client for handling GitHub webhook events with development management features."""
 
 import discord
 from discord.ext import commands
@@ -16,7 +16,6 @@ from utils.embed_utils import split_embed_fields
 from github_api import fetch_open_pull_requests
 from commands.setup import setup_channels
 
-
 import formatters
 
 # Setup logging
@@ -26,25 +25,11 @@ logger = logging.getLogger("discord_bot")
 # Discord bot intents
 intents = discord.Intents.default()
 intents.message_content = True
+intents.reactions = True  # Required for emoji reactions
 
 # Create bot instance
 bot = commands.Bot(command_prefix="!", intents=intents)
 bot.add_command(setup_channels)
-
-# Channels used during development that can be purged with the `!clear` command
-# ``!clear`` should only wipe the pull requests channel during normal operation
-DEV_CHANNELS: list[int] = [settings.channel_pull_requests]
-
-
-@bot.command(name="clear")
-async def clear_channels(ctx: commands.Context) -> None:
-    """Clear messages from the pull requests channel."""
-    for channel_id in DEV_CHANNELS:
-        await discord_bot_instance.purge_old_messages(channel_id, 0)
-    await ctx.send("✅ Pull requests channel cleared.")
-
-# Maintain ``clear`` alias for backward compatibility in tests
-clear = clear_channels
 
 
 class DiscordBot:
@@ -151,6 +136,18 @@ class DiscordBot:
             except Exception:
                 pass
 
+    async def clear_all_dynamic_channels(self) -> int:
+        """Clear all dynamic channels and return count of channels cleared."""
+        cleared_count = 0
+        for channel_id in settings.all_dynamic_channels:
+            try:
+                await self.purge_channel(channel_id)
+                cleared_count += 1
+                logger.info(f"Cleared dynamic channel {channel_id}")
+            except Exception as e:
+                logger.error(f"Failed to clear channel {channel_id}: {e}")
+        return cleared_count
+
     async def update_channel_name(self, channel_id: int, new_name: str) -> bool:
         """Rename a Discord channel."""
         if not self.ready:
@@ -173,14 +170,10 @@ class DiscordBot:
                 pass
             return False
 
-
-
     async def send_to_webhook(
         self, url: str, content: str = None, embed: discord.Embed = None
     ):
-
         """Send a message to a Discord webhook URL."""
-
         headers = {"Content-Type": "application/json"}
         data = {}
         if content:
@@ -204,12 +197,7 @@ class DiscordBot:
     async def send_to_channel(
         self, channel_id: int, content: str = None, embed: discord.Embed = None
     ) -> Optional[discord.Message]:
-        """Send a message to a specific Discord channel and return the sent message.
-
-        If ``embed`` contains more than 25 fields it will be split into multiple
-        embeds using :func:`utils.embed_utils.split_embed_fields` and each chunk
-        will be sent individually. The final :class:`discord.Message` is returned.
-        """
+        """Send a message to a specific Discord channel and return the sent message."""
         if not self.ready:
             await self.bot.wait_until_ready()
 
@@ -248,6 +236,10 @@ class DiscordBot:
         return None
 
 
+# Global bot instance
+discord_bot_instance = DiscordBot()
+
+
 @bot.event
 async def on_ready():
     """Called when the bot has successfully connected to Discord."""
@@ -259,13 +251,59 @@ async def on_ready():
         logs_channel = bot.get_channel(settings.channel_bot_logs)
         if logs_channel:
             embed = discord.Embed(
-                title="🤖 GitHub Discord Bot Online",
-                description="Bot has successfully connected and is ready to receive GitHub webhooks.",
+                title="🤖 GitHub Development Bot Online",
+                description="Bot has successfully connected and is ready to manage development workflows.",
                 color=discord.Color.green(),
+                timestamp=datetime.utcnow()
+            )
+            embed.add_field(
+                name="Features Active",
+                value="• Hourly statistics updates\n• Dynamic channel management\n• Auto emoji reactions\n• Smart message cleanup",
+                inline=False
             )
             await logs_channel.send(embed=embed)
     except Exception as e:
         logger.error(f"Failed to send startup message: {e}")
+
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    """Handle emoji reactions for message deletion."""
+    # Ignore bot reactions
+    if user.bot:
+        return
+    
+    # Check if this is a checkmark emoji
+    if str(reaction.emoji) == "✅":
+        # Check if this is the second checkmark (failsafe deletion)
+        if reaction.count >= 2:
+            try:
+                await reaction.message.delete()
+                logger.info(f"Message deleted via double checkmark failsafe by {user}")
+                
+                # Update PR map if this was a PR message
+                if reaction.message.channel.id == settings.channel_pull_requests:
+                    pr_map_data = load_pr_map()
+                    for key, msg_id in list(pr_map_data.items()):
+                        if msg_id == reaction.message.id:
+                            pr_map_data.pop(key)
+                            save_pr_map(pr_map_data)
+                            break
+                
+                # Log to bot logs
+                logs_channel = bot.get_channel(settings.channel_bot_logs)
+                if logs_channel:
+                    embed = discord.Embed(
+                        title="🗑️ Message Deleted",
+                        description=f"Message deleted via double checkmark failsafe",
+                        color=discord.Color.orange()
+                    )
+                    embed.add_field(name="User", value=str(user), inline=True)
+                    embed.add_field(name="Channel", value=reaction.message.channel.mention, inline=True)
+                    await logs_channel.send(embed=embed)
+                    
+            except Exception as e:
+                logger.error(f"Failed to delete message via emoji: {e}")
 
 
 @bot.event
@@ -274,23 +312,13 @@ async def on_error(event, *args, **kwargs):
     logger.error(f"Bot error in {event}: {args}, {kwargs}")
 
 
-# Global bot instance
-discord_bot_instance = DiscordBot()
-
-
 async def send_to_discord(
     channel_id: int,
     content: str = None,
     embed: discord.Embed = None,
     use_webhook: bool = False,
 ):
-    """Global function to send messages to Discord.
-
-    Splits embeds exceeding Discord's 25 field limit into multiple messages and
-    returns either the single :class:`discord.Message` sent or a list of messages
-    when multiple embeds are dispatched.
-    """
-
+    """Global function to send messages to Discord."""
     embed_chunks: List[discord.Embed]
     if embed is not None:
         embed_chunks = split_embed_fields(embed)
@@ -330,33 +358,134 @@ async def send_to_discord(
     return messages
 
 
-# Duplicate clear command and function removed to fix CommandRegistrationError
-# The original clear_channels function with @bot.command(name="clear") decorator
-# is already defined above and handles channel clearing
+@bot.command(name="clear")
+async def clear_all_channels(ctx: commands.Context) -> None:
+    """Clear all content from all dynamic channels."""
+    try:
+        await ctx.send("🧹 Clearing all dynamic channels...")
+        
+        cleared_count = await discord_bot_instance.clear_all_dynamic_channels()
+        
+        embed = discord.Embed(
+            title="✅ Channels Cleared",
+            description=f"Successfully cleared {cleared_count} dynamic channels",
+            color=discord.Color.green()
+        )
+        
+        # Update channel names after clearing
+        from main import update_dynamic_channel_names
+        await update_dynamic_channel_names()
+        
+        await ctx.send(embed=embed)
+        
+        # Log to bot logs
+        logs_channel = bot.get_channel(settings.channel_bot_logs)
+        if logs_channel:
+            embed = discord.Embed(
+                title="🧹 Mass Channel Clear",
+                description=f"All dynamic channels cleared by {ctx.author}",
+                color=discord.Color.blue(),
+                timestamp=datetime.utcnow()
+            )
+            embed.add_field(name="Channels Cleared", value=str(cleared_count), inline=True)
+            await logs_channel.send(embed=embed)
+            
+    except Exception as e:
+        logger.error(f"Failed to clear all channels: {e}")
+        await ctx.send(f"❌ Failed to clear channels: {e}")
 
 
+@bot.command(name="sync")
+async def sync_channels(ctx: commands.Context) -> None:
+    """Delete outdated messages, update channel numbers, and ensure only outstanding pull requests are in channels."""
+    try:
+        await ctx.send("🔄 Syncing channels...")
+        
+        # Import functions from main
+        from main import update_dynamic_channel_names, update_all_statistics
+        from cleanup import cleanup_pr_messages
+        
+        # Clean up closed PR messages
+        await cleanup_pr_messages()
+        
+        # Update channel names based on current message counts
+        await update_dynamic_channel_names()
+        
+        # Update statistics
+        await update_all_statistics()
+        
+        # Refresh open pull requests
+        await update_pull_requests(ctx, silent=True)
+        
+        embed = discord.Embed(
+            title="✅ Sync Complete",
+            description="All channels have been synchronized",
+            color=discord.Color.green()
+        )
+        embed.add_field(
+            name="Actions Performed",
+            value="• Cleaned up outdated messages\n• Updated channel numbers\n• Refreshed pull requests\n• Updated statistics",
+            inline=False
+        )
+        
+        await ctx.send(embed=embed)
+        
+        # Log to bot logs
+        logs_channel = bot.get_channel(settings.channel_bot_logs)
+        if logs_channel:
+            embed = discord.Embed(
+                title="🔄 Channel Sync",
+                description=f"Channels synchronized by {ctx.author}",
+                color=discord.Color.blue(),
+                timestamp=datetime.utcnow()
+            )
+            await logs_channel.send(embed=embed)
+            
+    except Exception as e:
+        logger.error(f"Failed to sync channels: {e}")
+        await ctx.send(f"❌ Failed to sync channels: {e}")
 
 
 @bot.command(name="update", aliases=["pr"])
-async def update_pull_requests(ctx: commands.Context) -> None:
+async def update_pull_requests(ctx: commands.Context, silent: bool = False) -> None:
     """Ensure all active pull requests are listed in the pull requests channel."""
-    pr_map_data = load_pr_map()
-    open_prs = await fetch_open_pull_requests()
-    added = 0
-    for repo, pr in open_prs:
-        key = f"{repo}#{pr.get('number')}"
-        if key in pr_map_data:
-            continue
-        payload = {
-            "action": "opened",
-            "pull_request": pr,
-            "repository": {"full_name": repo},
-        }
-        embed = formatters.format_pull_request_event(payload)
-        message = await send_to_discord(settings.channel_pull_requests, embed=embed)
-        if message:
-            pr_map_data[key] = message.id
-            added += 1
-    if added:
-        save_pr_map(pr_map_data)
-    await ctx.send(f"Added {added} pull request{'s' if added != 1 else ''}.")
+    try:
+        if not silent:
+            await ctx.send("🔄 Updating pull requests...")
+            
+        pr_map_data = load_pr_map()
+        open_prs = await fetch_open_pull_requests()
+        added = 0
+        
+        for repo, pr in open_prs:
+            key = f"{repo}#{pr.get('number')}"
+            if key in pr_map_data:
+                continue
+                
+            payload = {
+                "action": "opened",
+                "pull_request": pr,
+                "repository": {"full_name": repo},
+            }
+            embed = formatters.format_pull_request_event(payload)
+            message = await send_to_discord(settings.channel_pull_requests, embed=embed)
+            
+            if message:
+                # Add checkmark emoji
+                await message.add_reaction("✅")
+                pr_map_data[key] = message.id
+                added += 1
+                
+        if added:
+            save_pr_map(pr_map_data)
+            
+        if not silent:
+            await ctx.send(f"✅ Added {added} pull request{'s' if added != 1 else ''}.")
+            
+        return added
+        
+    except Exception as e:
+        logger.error(f"Failed to update pull requests: {e}")
+        if not silent:
+            await ctx.send(f"❌ Failed to update pull requests: {e}")
+        return 0
